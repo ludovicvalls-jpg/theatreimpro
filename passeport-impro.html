@@ -1,0 +1,1029 @@
+<title>Passeport Impro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700&family=Courier+Prime:wght@400;700&display=swap">
+
+<style id="app-style">
+  :root {
+    --bg: #F3ECDD;
+    --surface: #FFFDF8;
+    --surface-dim: #E9DFC7;
+    --text: #241C14;
+    --text-dim: #756A56;
+    --curtain: #6B1E23;
+    --curtain-strong: #4A1419;
+    --gold: #A9821E;
+    --gold-bright: #C9A227;
+    --border: #D8CBAA;
+    --shadow: 0 18px 40px -20px rgba(36, 20, 14, 0.35);
+    --focus: #2B3A55;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17130F;
+      --surface: #241C15;
+      --surface-dim: #2C2319;
+      --text: #F3ECDD;
+      --text-dim: #B8A98C;
+      --curtain: #B14A52;
+      --curtain-strong: #E07179;
+      --gold: #D9B54A;
+      --gold-bright: #E9C862;
+      --border: #3B3022;
+      --shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.6);
+      --focus: #8FA5D6;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17130F;
+    --surface: #241C15;
+    --surface-dim: #2C2319;
+    --text: #F3ECDD;
+    --text-dim: #B8A98C;
+    --curtain: #B14A52;
+    --curtain-strong: #E07179;
+    --gold: #D9B54A;
+    --gold-bright: #E9C862;
+    --border: #3B3022;
+    --shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.6);
+    --focus: #8FA5D6;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Archivo", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  #app { max-width: 760px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  h1, h2, h3 { font-family: "Fraunces", Georgia, serif; text-wrap: balance; margin: 0; }
+  .mono { font-family: "Courier Prime", ui-monospace, monospace; }
+
+  button, input, select, textarea {
+    font-family: inherit;
+    font-size: 1rem;
+    color: inherit;
+  }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .cover-card, .passport-wrap { animation: rise 0.5s ease-out; }
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- Cover ---------- */
+  .cover-card {
+    background: radial-gradient(120% 140% at 50% -10%, var(--curtain-strong), var(--curtain) 60%);
+    color: #F3ECDD;
+    border-radius: 4px;
+    padding: 44px 28px 36px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--curtain-strong);
+  }
+  .cover-emblem { font-size: 2.4rem; line-height: 1; margin-bottom: 10px; }
+  .cover-card h1 { font-size: clamp(1.9rem, 5vw, 2.6rem); font-weight: 600; letter-spacing: 0.01em; text-shadow: 0 2px 10px rgba(0,0,0,0.35); }
+  .cover-sub { margin: 12px auto 0; max-width: 40ch; color: #E8D9C3; font-size: 0.98rem; line-height: 1.5; text-shadow: 0 1px 6px rgba(0,0,0,0.35); }
+
+  .cover-links { display: flex; justify-content: center; align-items: center; gap: 18px; margin-top: 26px; flex-wrap: wrap; }
+
+  .roster { margin-top: 30px; }
+  .roster-label {
+    font-family: "Courier Prime", monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.76rem;
+    color: var(--text-dim);
+    margin: 0 0 14px;
+  }
+  .group-section { margin: 22px 0 0; }
+  .group-section:first-of-type { margin-top: 0; }
+  .group-header { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
+  .group-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .group-name {
+    font-family: "Courier Prime", monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .ticket {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 10px 14px;
+    text-align: left;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .ticket:hover { border-color: var(--gold); transform: translateY(-1px); }
+  .ticket span { font-weight: 600; }
+
+  .avatar {
+    flex: none; overflow: hidden;
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Fraunces", serif; font-weight: 600; font-size: 0.92rem;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+  .avatar-lg { width: 68px; height: 68px; font-size: 1.5rem; }
+
+  .link-btn {
+    background: none; border: none;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .link-btn:hover { color: var(--text); }
+
+  .empty-note {
+    text-align: center; color: var(--text-dim); font-size: 0.9rem;
+    padding: 14px 10px; border: 1px dashed var(--border); border-radius: 3px;
+  }
+
+  /* ---------- Passport ---------- */
+  .back-btn {
+    background: none; border: none; color: var(--text-dim);
+    font-size: 0.88rem; padding: 0 0 18px; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .back-btn:hover { color: var(--text); }
+
+  .passport-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .passport-grid { display: grid; grid-template-columns: 200px 1fr; }
+  @media (max-width: 560px) { .passport-grid { grid-template-columns: 1fr; } }
+
+  .passport-id {
+    background: var(--surface-dim);
+    padding: 28px 22px;
+    text-align: center;
+    border-right: 2px dashed var(--border);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  @media (max-width: 560px) {
+    .passport-id { border-right: none; border-bottom: 2px dashed var(--border); flex-direction: row; text-align: left; flex-wrap: wrap; }
+  }
+  .passport-name { font-size: 1.3rem; font-weight: 600; }
+  .passport-number { color: var(--text-dim); font-size: 0.78rem; letter-spacing: 0.06em; }
+  .group-pill, .badge-count-pill {
+    display: inline-block;
+    font-family: "Courier Prime", monospace;
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .badge-count-pill { background: var(--gold); color: #201804; margin-top: 2px; }
+
+  .photo-upload-btn {
+    position: relative; display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+    padding: 5px 12px; font-size: 0.76rem; color: var(--text-dim); cursor: pointer;
+  }
+  .photo-upload-btn:hover { border-color: var(--gold); }
+  .photo-upload-btn input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .photo-hint { font-size: 0.66rem; color: var(--text-dim); text-align: center; max-width: 150px; margin: 0; }
+  .remove-photo { background: none; border: none; color: var(--text-dim); font-size: 0.78rem; text-decoration: underline; }
+  .remove-photo:hover { color: var(--curtain); }
+
+  .passport-body { padding: 26px 24px 28px; }
+  .stamps-heading {
+    text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.72rem;
+    color: var(--text-dim); margin: 0 0 16px;
+  }
+
+  .prof-note-block { margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px dashed var(--border); }
+  .prof-note-text { font-family: "Fraunces", serif; font-style: italic; color: var(--text); font-size: 1rem; line-height: 1.55; margin: 0; }
+
+  .badge-shelf { display: flex; flex-wrap: wrap; gap: 16px 14px; }
+  .badge-item { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 78px; }
+  .badge-icon {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold) 75%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+    box-shadow: 0 6px 12px -6px rgba(32, 24, 4, 0.5);
+    overflow: hidden;
+  }
+  .badge-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+  .badge-label { font-size: 0.72rem; text-align: center; color: var(--text-dim); line-height: 1.25; }
+
+  .ambassador-block { margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--border); }
+  .amb-ticks { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+  .amb-tick {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold) 75%);
+    color: #201804;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem; font-weight: 700;
+  }
+  .amb-empty { color: var(--text-dim); font-size: 0.88rem; font-style: italic; }
+  .amb-count { color: var(--text-dim); font-size: 0.8rem; }
+
+  .flavor {
+    margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border);
+    color: var(--text-dim); font-size: 0.9rem; font-style: italic;
+  }
+  .flavor.amb-flavor { margin-top: 6px; padding-top: 0; border-top: none; }
+
+  /* ---------- Trombinoscope ---------- */
+  .trombi-title { font-size: 1.4rem; margin: 0 0 20px; }
+  .trombi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 18px 12px; }
+  .trombi-tile { display: flex; flex-direction: column; align-items: center; gap: 8px; background: none; border: none; padding: 0; }
+  .trombi-tile .avatar-lg { width: 82px; height: 82px; font-size: 1.6rem; }
+  .trombi-tile span { font-size: 0.8rem; font-weight: 600; text-align: center; }
+
+  /* ---------- Admin mode ---------- */
+  .teacher h2 { font-size: 1.5rem; margin-bottom: 6px; }
+  .hint { color: var(--text-dim); font-size: 0.92rem; margin: 0 0 20px; }
+
+  .badge-catalog-manager {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+    padding: 16px 18px; margin-bottom: 26px;
+  }
+  .badge-catalog-manager h3 { font-size: 1.02rem; margin-bottom: 10px; }
+  #add-badge-form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  #new-badge-emoji {
+    width: 62px; flex: 0 0 auto; padding: 10px; border-radius: 3px; text-align: center; font-size: 1.15rem;
+    border: 1px solid var(--border); background: var(--surface-dim); color: var(--text);
+  }
+  #new-badge-label, #new-badge-hint {
+    flex: 1 1 160px; padding: 10px 12px; border-radius: 3px;
+    border: 1px solid var(--border); background: var(--surface-dim); color: var(--text);
+  }
+  #new-badge-image {
+    flex: 1 1 200px; padding: 8px; border-radius: 3px;
+    border: 1px solid var(--border); background: var(--surface-dim); color: var(--text-dim); font-size: 0.85rem;
+  }
+  #add-badge-form button {
+    background: var(--curtain); color: #fff; border: none;
+    padding: 10px 16px; border-radius: 3px; font-weight: 600;
+  }
+  #add-badge-form button:hover { background: var(--curtain-strong); }
+  .badge-form-hint { font-size: 0.8rem; color: var(--text-dim); margin: -6px 0 14px; }
+  #badge-form-status { font-size: 0.82rem; color: var(--text-dim); display: block; margin: -6px 0 14px; }
+  .badge-catalog-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge-catalog-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface-dim); border: 1px solid var(--border); border-radius: 999px;
+    padding: 5px 8px 5px 10px; font-size: 0.85rem;
+  }
+  .badge-catalog-chip img, .badge-toggle img {
+    width: 20px; height: 20px; border-radius: 50%; object-fit: cover; flex: none;
+  }
+  .remove-badge-type { background: none; border: none; color: var(--text-dim); font-size: 0.95rem; line-height: 1; padding: 0 2px; }
+  .remove-badge-type:hover { color: var(--curtain); }
+
+  #banner-form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  #banner-form input[type="text"] {
+    flex: 1 1 200px; padding: 10px 12px; border-radius: 3px;
+    border: 1px solid var(--border); background: var(--surface-dim); color: var(--text);
+  }
+  #banner-form input[type="file"] {
+    flex: 1 1 200px; padding: 8px; border-radius: 3px;
+    border: 1px solid var(--border); background: var(--surface-dim); color: var(--text-dim); font-size: 0.85rem;
+  }
+  #banner-form button {
+    background: var(--curtain); color: #fff; border: none;
+    padding: 10px 16px; border-radius: 3px; font-weight: 600;
+  }
+  #banner-form button:hover { background: var(--curtain-strong); }
+  #banner-reset {
+    background: none; border: none; color: var(--text-dim); font-size: 0.82rem;
+    text-decoration: underline; padding: 0; margin: 0 0 6px;
+  }
+  #banner-reset:hover { color: var(--curtain); }
+  #banner-form-status { font-size: 0.82rem; color: var(--text-dim); display: block; }
+
+  #add-student-form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  #new-student-name {
+    flex: 1 1 180px; padding: 10px 12px; border-radius: 3px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  }
+  #new-student-group {
+    flex: 0 0 auto; padding: 10px 12px; border-radius: 3px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  }
+  #add-student-form button {
+    background: var(--curtain); color: #fff; border: none;
+    padding: 10px 16px; border-radius: 3px; font-weight: 600;
+  }
+  #add-student-form button:hover { background: var(--curtain-strong); }
+
+  .student-editor {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+    padding: 16px 18px; margin-bottom: 14px;
+  }
+  .student-editor-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .student-editor-name { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .remove-student { background: none; border: none; color: var(--text-dim); font-size: 0.82rem; text-decoration: underline; }
+  .remove-student:hover { color: var(--curtain); }
+
+  .photo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .photo-row .photo-upload-btn { padding: 6px 12px; font-size: 0.82rem; background: var(--surface-dim); }
+
+  .group-select-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 0.82rem; color: var(--text-dim); margin-bottom: 12px; }
+  .student-group-select { padding: 5px 8px; border-radius: 3px; border: 1px solid var(--border); background: var(--surface-dim); color: var(--text); font-size: 0.82rem; }
+
+  .badge-toggles { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 4px; }
+  .badge-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    border-radius: 999px; padding: 6px 12px; font-size: 0.85rem;
+    border: 1px solid var(--border); background: var(--surface-dim); color: var(--text-dim);
+  }
+  .badge-toggle:hover { border-color: var(--gold); }
+  .badge-toggle.earned { background: var(--gold); border-color: var(--gold); color: #201804; font-weight: 600; }
+
+  .skill-editor-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; }
+  .skill-editor-name { font-size: 0.9rem; color: var(--text-dim); flex: 1; }
+  .skill-editor-controls { display: flex; align-items: center; gap: 10px; }
+  .pip-btn {
+    width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border);
+    background: var(--surface-dim); font-weight: 700; line-height: 1;
+  }
+  .pip-btn:hover { border-color: var(--gold); }
+  .skill-count { font-family: "Courier Prime", monospace; font-size: 0.85rem; min-width: 32px; text-align: center; }
+
+  .amb-editor-row { margin-top: 10px; padding-top: 12px; border-top: 1px dashed var(--border); }
+  .amb-editor-row .skill-editor-name { color: var(--gold); font-weight: 600; }
+
+  .note-form { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
+  .note-label { display: block; font-size: 0.82rem; color: var(--gold); font-weight: 600; margin-bottom: 6px; }
+  .note-textarea {
+    width: 100%; min-height: 60px; padding: 8px 10px; border-radius: 3px; resize: vertical;
+    border: 1px solid var(--border); background: var(--surface-dim); color: var(--text); font-family: inherit; font-size: 0.9rem;
+    margin-bottom: 8px;
+  }
+  .note-save-btn {
+    background: var(--surface-dim); border: 1px solid var(--border); color: var(--text-dim);
+    padding: 6px 12px; border-radius: 3px; font-size: 0.82rem;
+  }
+  .note-save-btn:hover { border-color: var(--gold); color: var(--text); }
+
+  .publish-bar {
+    position: sticky; bottom: 0;
+    display: flex; align-items: center; gap: 14px;
+    background: var(--bg);
+    padding: 16px 0 4px;
+    border-top: 1px solid var(--border);
+    margin-top: 10px;
+  }
+  #publish-btn {
+    background: var(--gold); color: #201804; border: none; font-weight: 700;
+    padding: 12px 20px; border-radius: 3px;
+  }
+  #publish-btn:hover { background: var(--gold-bright); }
+  #publish-status { font-size: 0.85rem; color: var(--text-dim); }
+</style>
+
+<div id="app"></div>
+
+<script id="app-script">
+(function () {
+  "use strict";
+
+  var GROUPS = [
+    { id: 1, label: "Groupe 1", color: "#6B1E23", text: "#F3ECDD" },
+    { id: 2, label: "Groupe 2", color: "#A9821E", text: "#201804" },
+    { id: 3, label: "Groupe 3", color: "#2B3A55", text: "#F3ECDD" },
+    { id: 4, label: "Groupe 4", color: "#3F5B45", text: "#F3ECDD" }
+  ];
+
+  var DATA = /*DATA_START*/{"settings":{"title":"Passeport Impro","subtitle":"Chaque séance, un badge à gagner. Chaque badge, une reconnaissance.","banner":null},"students":[{"id":"s1","name":"Léa","group":1,"ambassadorWins":2,"badges":["feu-de-scene","pilier-du-choeur"],"note":"Continue comme ça, ta présence illumine le groupe !","photo":null},{"id":"s2","name":"Nathan","group":2,"ambassadorWins":0,"badges":[],"note":"","photo":null},{"id":"s3","name":"Inès","group":3,"ambassadorWins":4,"badges":["grande-oreille","funambule","etincelle","phenix"],"note":"","photo":null},{"id":"s4","name":"Mateo","group":4,"ambassadorWins":0,"badges":[],"note":"","photo":null},{"id":"s5","name":"Chloé","group":1,"ambassadorWins":1,"badges":["cameleon"],"note":"","photo":null}],"badges":[{"key":"grande-oreille","emoji":"🦉","label":"Grande Oreille","hint":"Une écoute qui change toute la scène."},{"key":"funambule","emoji":"🪶","label":"Funambule","hint":"A osé lâcher prise sans filet."},{"key":"etincelle","emoji":"⚡","label":"Étincelle","hint":"A lancé une proposition qui a tout changé."},{"key":"phenix","emoji":"🔥","label":"Phénix","hint":"S’est relevé·e après un raté avec panache."},{"key":"feu-de-scene","emoji":"🌟","label":"Feu de Scène","hint":"Une énergie qui embrase le plateau."},{"key":"pilier-du-choeur","emoji":"🤝","label":"Pilier du Chœur","hint":"Toujours là pour porter le groupe."},{"key":"cameleon","emoji":"🎭","label":"Caméléon","hint":"Change de personnage avec une aisance folle."},{"key":"fou-rire","emoji":"😂","label":"Fou Rire Assuré","hint":"A fait rire toute la salle."},{"key":"batisseur-de-mondes","emoji":"🗺️","label":"Bâtisseur de Mondes","hint":"Crée un univers qu’on croirait réel."},{"key":"coeur-de-la-troupe","emoji":"🕊️","label":"Cœur de la Troupe","hint":"Bienveillant·e avec toute la troupe."}]}/*DATA_END*/;
+
+  var data = JSON.parse(JSON.stringify(DATA));
+  var view = { screen: "cover" };
+
+  function esc(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function slugify(str) {
+    var base = String(str).toLowerCase()
+      .normalize("NFD").replace(new RegExp("[̀-ͯ]", "g"), "")
+      .replace(/[^a-z0-9]+/g, "-").replace(/(^-+|-+$)/g, "");
+    return (base || "badge") + "-" + Date.now().toString(36).slice(-4);
+  }
+
+  function groupOf(student) {
+    var g = GROUPS.filter(function (g) { return g.id === student.group; })[0];
+    return g || GROUPS[0];
+  }
+
+  function initials(name) {
+    var parts = name.trim().split(/\s+/);
+    var s = parts[0] ? parts[0][0] : "";
+    if (parts[1]) s += parts[1][0];
+    return s.toUpperCase();
+  }
+
+  function avatarHtml(student, size) {
+    var cls = size === "lg" ? "avatar avatar-lg" : "avatar";
+    var g = groupOf(student);
+    if (student.photo) {
+      return '<div class="' + cls + '" style="background:' + g.color + '"><img src="' + student.photo + '" alt=""></div>';
+    }
+    return '<div class="' + cls + '" style="background:' + g.color + ';color:' + g.text + '">' + esc(initials(student.name)) + "</div>";
+  }
+
+  function badgeByKey(key) {
+    return data.badges.filter(function (b) { return b.key === key; })[0];
+  }
+
+  function badgeVisualHtml(b) {
+    if (b.image) return '<img src="' + b.image + '" alt="">';
+    return b.emoji || "🏅";
+  }
+
+  function fileToResizedDataURL(file, maxDim, mimeType, quality) {
+    mimeType = mimeType || "image/png";
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onerror = function () { reject(new Error("read-failed")); };
+      reader.onload = function () {
+        var img = new Image();
+        img.onerror = function () { reject(new Error("decode-failed")); };
+        img.onload = function () {
+          var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+          var w = Math.max(1, Math.round(img.width * scale));
+          var h = Math.max(1, Math.round(img.height * scale));
+          var canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          var ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          try {
+            resolve(canvas.toDataURL(mimeType, quality));
+          } catch (e) {
+            reject(e);
+          }
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function badgeFlavor(n) {
+    if (n === 0) return "Pas encore de badge — chaque séance peut en offrir un nouveau.";
+    if (n <= 2) return "Une collection qui commence à prendre forme.";
+    if (n <= 5) return "Une jolie brochette de badges.";
+    return "Une collection impressionnante !";
+  }
+
+  function ambassadorFlavor(n) {
+    if (n === 0) return "Pas encore de victoire en tant qu’ambassadeur·rice.";
+    if (n <= 2) return "Ambassadeur·rice prometteur·se.";
+    if (n <= 5) return "Ambassadeur·rice aguerri·e.";
+    return "Grand·e Ambassadeur·rice, reconnu·e de toutes les troupes.";
+  }
+
+  function passportNumber(index) {
+    return "FR-IMP-" + String(index + 1).padStart(4, "0");
+  }
+
+  function findStudent(id) {
+    return data.students.filter(function (s) { return s.id === id; })[0];
+  }
+
+  function studentsByGroup(groupId) {
+    return data.students
+      .filter(function (s) { return s.group === groupId; })
+      .sort(function (a, b) { return a.name.localeCompare(b.name, "fr"); });
+  }
+
+  function toggleBadge(studentId, key) {
+    var s = findStudent(studentId);
+    if (!s) return;
+    var idx = s.badges.indexOf(key);
+    if (idx === -1) s.badges.push(key); else s.badges.splice(idx, 1);
+  }
+
+  function addBadgeType(emoji, label, hint, image) {
+    data.badges.push({ key: slugify(label), emoji: emoji || "🏅", label: label, hint: hint || "", image: image || null });
+  }
+
+  function removeBadgeType(key) {
+    data.badges = data.badges.filter(function (b) { return b.key !== key; });
+    data.students.forEach(function (s) {
+      s.badges = s.badges.filter(function (k) { return k !== key; });
+    });
+  }
+
+  function adjustAmbassador(studentId, delta) {
+    var s = findStudent(studentId);
+    if (!s) return;
+    s.ambassadorWins = Math.max(0, (s.ambassadorWins || 0) + delta);
+  }
+
+  function setGroup(studentId, groupId) {
+    var s = findStudent(studentId);
+    if (!s) return;
+    s.group = groupId;
+  }
+
+  function setNote(studentId, note) {
+    var s = findStudent(studentId);
+    if (!s) return;
+    s.note = note;
+  }
+
+  function setPhoto(studentId, url) {
+    var s = findStudent(studentId);
+    if (!s) return;
+    s.photo = url;
+  }
+
+  function clearPhoto(studentId) {
+    var s = findStudent(studentId);
+    if (!s) return;
+    s.photo = null;
+  }
+
+  function updateSettings(title, subtitle) {
+    data.settings.title = title || "Passeport Impro";
+    data.settings.subtitle = subtitle || "";
+  }
+
+  function setBanner(url) {
+    data.settings.banner = url;
+  }
+
+  function clearBanner() {
+    data.settings.banner = null;
+  }
+
+  function addStudent(name, groupId) {
+    var id = "s" + Date.now() + Math.floor(Math.random() * 1000);
+    data.students.push({ id: id, name: name, group: groupId, ambassadorWins: 0, badges: [], note: "", photo: null });
+  }
+
+  function removeStudent(id) {
+    data.students = data.students.filter(function (s) { return s.id !== id; });
+    if (view.screen === "passport" && view.id === id) view = { screen: "cover" };
+  }
+
+  function renderCover() {
+    var groupsHtml = GROUPS.map(function (g) {
+      var members = studentsByGroup(g.id);
+      var ticketsHtml = members.length
+        ? members.map(function (s) {
+            return '<button class="ticket" data-id="' + esc(s.id) + '">' + avatarHtml(s) + "<span>" + esc(s.name) + "</span></button>";
+          }).join("")
+        : '<p class="empty-note">Aucun·e élève dans ce groupe pour l’instant.</p>';
+      return (
+        '<div class="group-section">' +
+          '<div class="group-header"><span class="group-dot" style="background:' + g.color + '"></span><span class="group-name">' + esc(g.label) + "</span></div>" +
+          '<div class="roster-grid">' + ticketsHtml + "</div>" +
+        "</div>"
+      );
+    }).join("");
+
+    var bannerStyle = data.settings.banner
+      ? ' style="background-image:linear-gradient(180deg, rgba(20,10,8,.35), rgba(20,10,8,.68)), url(&quot;' + data.settings.banner + '&quot;);background-size:cover;background-position:center;"'
+      : "";
+
+    return (
+      '<div class="cover">' +
+        '<div class="cover-card"' + bannerStyle + '>' +
+          (data.settings.banner ? "" : '<div class="cover-emblem">🎭</div>') +
+          "<h1>" + esc(data.settings.title || "Passeport Impro") + "</h1>" +
+          '<p class="cover-sub">' + esc(data.settings.subtitle || "") + "</p>" +
+        "</div>" +
+        '<div class="roster">' +
+          '<p class="roster-label">Choisis ton nom</p>' +
+          groupsHtml +
+        "</div>" +
+        '<div class="cover-links">' +
+          '<button class="link-btn" id="trombi-toggle">📸 Trombinoscope</button>' +
+          '<button class="link-btn" id="teacher-toggle">Mode admin</button>' +
+        "</div>" +
+      "</div>"
+    );
+  }
+
+  function renderTrombi() {
+    var groupsHtml = GROUPS.map(function (g) {
+      var members = studentsByGroup(g.id);
+      var tilesHtml = members.length
+        ? members.map(function (s) {
+            return (
+              '<button class="trombi-tile" data-id="' + esc(s.id) + '">' +
+                avatarHtml(s, "lg") +
+                "<span>" + esc(s.name) + "</span>" +
+              "</button>"
+            );
+          }).join("")
+        : '<p class="empty-note">Aucun·e élève dans ce groupe pour l’instant.</p>';
+      return (
+        '<div class="group-section">' +
+          '<div class="group-header"><span class="group-dot" style="background:' + g.color + '"></span><span class="group-name">' + esc(g.label) + "</span></div>" +
+          '<div class="trombi-grid">' + tilesHtml + "</div>" +
+        "</div>"
+      );
+    }).join("");
+
+    return (
+      '<button class="back-btn" id="back-cover">&larr; Retour</button>' +
+      '<h2 class="trombi-title">📸 Trombinoscope</h2>' +
+      groupsHtml
+    );
+  }
+
+  function renderPassport(id) {
+    var s = findStudent(id);
+    if (!s) { view = { screen: "cover" }; return renderCover(); }
+    var index = data.students.indexOf(s);
+    var group = groupOf(s);
+    var ambWins = s.ambassadorWins || 0;
+    var earned = (s.badges || []).map(badgeByKey).filter(Boolean);
+
+    var shelfHtml = earned.length
+      ? earned.map(function (b) {
+          return (
+            '<div class="badge-item" title="' + esc(b.hint || "") + '">' +
+              '<div class="badge-icon">' + badgeVisualHtml(b) + "</div>" +
+              '<div class="badge-label">' + esc(b.label) + "</div>" +
+            "</div>"
+          );
+        }).join("")
+      : '<p class="empty-note">Pas encore de badge — chaque séance peut en offrir un nouveau.</p>';
+
+    var ambTicks = "";
+    if (ambWins > 0) {
+      for (var i = 0; i < ambWins; i++) { ambTicks += '<span class="amb-tick">✓</span>'; }
+    } else {
+      ambTicks = '<span class="amb-empty">Aucune victoire pour l’instant.</span>';
+    }
+
+    var noteHtml = s.note
+      ? '<p class="prof-note-text">' + esc(s.note).replace(/\n/g, "<br>") + "</p>"
+      : '<p class="empty-note">Pas encore de mot du prof pour l’instant.</p>';
+
+    return (
+      '<button class="back-btn" id="back-cover">&larr; Retour</button>' +
+      '<div class="passport-wrap">' +
+        '<div class="passport-grid">' +
+          '<div class="passport-id">' +
+            avatarHtml(s, "lg") +
+            '<label class="photo-upload-btn">📷 ' + (s.photo ? "Changer ma photo" : "Ajouter ma photo") +
+              '<input type="file" accept="image/*" class="self-photo-input" data-student="' + esc(s.id) + '">' +
+            "</label>" +
+            '<p class="photo-hint">Visible de tous une fois enregistrée par l’admin.</p>' +
+            '<div class="passport-name">' + esc(s.name) + "</div>" +
+            '<div class="passport-number mono">' + passportNumber(index) + "</div>" +
+            '<span class="group-pill" style="background:' + group.color + ";color:" + group.text + '">' + esc(group.label) + "</span>" +
+            '<span class="badge-count-pill">' + earned.length + " BADGE" + (earned.length > 1 ? "S" : "") + "</span>" +
+          "</div>" +
+          '<div class="passport-body">' +
+            '<div class="prof-note-block">' +
+              '<p class="stamps-heading">💬 Le mot du prof</p>' +
+              noteHtml +
+            "</div>" +
+            '<p class="stamps-heading">Badges</p>' +
+            '<div class="badge-shelf">' + shelfHtml + "</div>" +
+            '<p class="flavor">' + badgeFlavor(earned.length) + "</p>" +
+            '<div class="ambassador-block">' +
+              '<p class="stamps-heading">🏅 Victoires Ambassadeur</p>' +
+              '<div class="amb-ticks">' + ambTicks + "</div>" +
+              '<p class="amb-count mono">' + ambWins + " victoire" + (ambWins > 1 ? "s" : "") + "</p>" +
+              '<p class="flavor amb-flavor">' + ambassadorFlavor(ambWins) + "</p>" +
+            "</div>" +
+          "</div>" +
+        "</div>" +
+      "</div>"
+    );
+  }
+
+  function studentEditorHtml(s) {
+    var groupOptions = GROUPS.map(function (g) {
+      return '<option value="' + g.id + '"' + (s.group === g.id ? " selected" : "") + ">" + esc(g.label) + "</option>";
+    }).join("");
+
+    var badgeToggles = data.badges.length
+      ? data.badges.map(function (b) {
+          var active = (s.badges || []).indexOf(b.key) !== -1;
+          return (
+            '<button type="button" class="badge-toggle' + (active ? " earned" : "") + '" ' +
+              'data-student="' + esc(s.id) + '" data-badge="' + esc(b.key) + '" title="' + esc(b.hint || "") + '">' +
+              badgeVisualHtml(b) + " " + esc(b.label) +
+            "</button>"
+          );
+        }).join("")
+      : '<span class="amb-empty">Crée un badge ci-dessus pour pouvoir l’attribuer.</span>';
+
+    var ambWins = s.ambassadorWins || 0;
+
+    return (
+      '<div class="student-editor">' +
+        '<div class="student-editor-head">' +
+          '<div class="student-editor-name">' + avatarHtml(s) + "<span>" + esc(s.name) + "</span></div>" +
+          '<button class="remove-student" data-student="' + esc(s.id) + '">Retirer</button>' +
+        "</div>" +
+        '<div class="photo-row">' +
+          '<label class="photo-upload-btn">📷 Changer la photo' +
+            '<input type="file" accept="image/*" class="student-photo-input" data-student="' + esc(s.id) + '">' +
+          "</label>" +
+          (s.photo ? '<button type="button" class="remove-photo" data-student="' + esc(s.id) + '">Retirer la photo</button>' : "") +
+        "</div>" +
+        '<div class="group-select-row">' +
+          "<span>Groupe</span>" +
+          '<select class="student-group-select" data-student="' + esc(s.id) + '">' + groupOptions + "</select>" +
+        "</div>" +
+        '<div class="badge-toggles">' + badgeToggles + "</div>" +
+        '<div class="skill-editor-row amb-editor-row">' +
+          '<span class="skill-editor-name">🏅 Victoires Ambassadeur</span>' +
+          '<div class="skill-editor-controls">' +
+            '<button class="pip-btn amb-minus" data-student="' + esc(s.id) + '" aria-label="Retirer une victoire ambassadeur">&minus;</button>' +
+            '<span class="skill-count mono">' + ambWins + "</span>" +
+            '<button class="pip-btn amb-plus" data-student="' + esc(s.id) + '" aria-label="Ajouter une victoire ambassadeur">+</button>' +
+          "</div>" +
+        "</div>" +
+        '<form class="note-form" data-student="' + esc(s.id) + '">' +
+          '<label class="note-label">💬 Le mot du prof</label>' +
+          '<textarea class="note-textarea" placeholder="Une note personnalisée, visible sur sa fiche…">' + esc(s.note || "") + "</textarea>" +
+          '<button type="submit" class="note-save-btn">Enregistrer la note</button>' +
+        "</form>" +
+      "</div>"
+    );
+  }
+
+  function renderTeacher() {
+    var groupOptionsForAdd = GROUPS.map(function (g) {
+      return '<option value="' + g.id + '">' + esc(g.label) + "</option>";
+    }).join("");
+
+    var badgeCatalogHtml = data.badges.length
+      ? data.badges.map(function (b) {
+          return (
+            '<span class="badge-catalog-chip">' + badgeVisualHtml(b) + " " + esc(b.label) +
+              '<button type="button" class="remove-badge-type" data-badge="' + esc(b.key) + '" aria-label="Supprimer ce badge">&times;</button>' +
+            "</span>"
+          );
+        }).join("")
+      : '<span class="amb-empty">Aucun badge pour l’instant — crée le premier ci-dessus.</span>';
+
+    var groupsHtml = GROUPS.map(function (g) {
+      var members = studentsByGroup(g.id);
+      var editors = members.length
+        ? members.map(studentEditorHtml).join("")
+        : '<p class="empty-note">Aucun·e élève dans ce groupe pour l’instant.</p>';
+      return (
+        '<div class="group-section">' +
+          '<div class="group-header"><span class="group-dot" style="background:' + g.color + '"></span><span class="group-name">' + esc(g.label) + "</span></div>" +
+          editors +
+        "</div>"
+      );
+    }).join("");
+
+    return (
+      '<div class="teacher">' +
+        '<button class="back-btn" id="back-cover">&larr; Retour</button>' +
+        "<h2>Mode admin</h2>" +
+        '<p class="hint">Crée des badges, gère les groupes et les photos, laisse un mot à chaque élève, puis enregistre pour que tout le monde voie la mise à jour.</p>' +
+        '<div class="badge-catalog-manager">' +
+          "<h3>🖼️ Bannière du passeport</h3>" +
+          '<form id="banner-form">' +
+            '<input type="text" id="banner-title" placeholder="Titre" maxlength="60" value="' + esc(data.settings.title || "") + '" required>' +
+            '<input type="text" id="banner-subtitle" placeholder="Sous-titre" maxlength="140" value="' + esc(data.settings.subtitle || "") + '">' +
+            '<input type="file" id="banner-image" accept="image/*">' +
+            "<button type=\"submit\">Enregistrer la bannière</button>" +
+          "</form>" +
+          (data.settings.banner ? '<button type="button" id="banner-reset">Revenir au fond par défaut</button>' : "") +
+          '<span id="banner-form-status"></span>' +
+        "</div>" +
+        '<div class="badge-catalog-manager">' +
+          "<h3>🏷️ Badges disponibles</h3>" +
+          '<form id="add-badge-form">' +
+            '<input type="text" id="new-badge-emoji" placeholder="🦉" maxlength="4">' +
+            '<input type="text" id="new-badge-label" placeholder="Nom du badge" maxlength="40">' +
+            '<input type="text" id="new-badge-hint" placeholder="Description courte (optionnel)" maxlength="80">' +
+            '<input type="file" id="new-badge-image" accept="image/*">' +
+            "<button type=\"submit\">Créer le badge</button>" +
+          "</form>" +
+          '<p class="badge-form-hint">Choisis une image sur ton ordinateur si tu en as une — sinon l’emoji suffit.</p>' +
+          '<span id="badge-form-status"></span>' +
+          '<div class="badge-catalog-list">' + badgeCatalogHtml + "</div>" +
+        "</div>" +
+        '<form id="add-student-form">' +
+          '<input type="text" id="new-student-name" placeholder="Prénom du ou de la nouvelle élève" maxlength="40">' +
+          '<select id="new-student-group">' + groupOptionsForAdd + "</select>" +
+          "<button type=\"submit\">Ajouter</button>" +
+        "</form>" +
+        '<div class="teacher-roster">' + groupsHtml + "</div>" +
+        '<div class="publish-bar">' +
+          '<button id="publish-btn">Télécharger la page mise à jour</button>' +
+          '<span id="publish-status"></span>' +
+        "</div>" +
+        '<p class="hint">Ce bouton télécharge un nouveau fichier sur ton ordinateur. Remplace-le ensuite là où tu héberges le passeport pour que tout le monde voie la mise à jour.</p>' +
+      "</div>"
+    );
+  }
+
+  function render() {
+    var app = document.getElementById("app");
+    if (view.screen === "passport") app.innerHTML = renderPassport(view.id);
+    else if (view.screen === "teacher") app.innerHTML = renderTeacher();
+    else if (view.screen === "trombi") app.innerHTML = renderTrombi();
+    else app.innerHTML = renderCover();
+  }
+
+  function publishData() {
+    var statusEl = document.getElementById("publish-status");
+    try {
+      var doc = buildDocument();
+      var blob = new Blob([doc], { type: "text/html;charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "passeport-impro.html";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+      if (statusEl) statusEl.textContent = "Fichier téléchargé ✓ — remplace-le sur ton hébergement.";
+    } catch (err) {
+      if (statusEl) statusEl.textContent = "Échec du téléchargement, réessaie.";
+    }
+  }
+
+  function buildDocument() {
+    var styleText = document.getElementById("app-style").textContent;
+    var scriptSrc = document.getElementById("app-script").textContent;
+    var newScript = scriptSrc.replace(
+      /\/\*DATA_START\*\/[\s\S]*?\/\*DATA_END\*\//,
+      "/*DATA_START*/" + JSON.stringify(data) + "/*DATA_END*/"
+    );
+    return (
+      "<!doctype html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n" +
+      "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" +
+      "<title>Passeport Impro</title>\n" +
+      "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n" +
+      "<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n" +
+      "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700&family=Courier+Prime:wght@400;700&display=swap\">\n" +
+      "<style id=\"app-style\">" + styleText + "</style>\n</head>\n<body>\n" +
+      "<div id=\"app\"></div>\n" +
+      "<script id=\"app-script\">" + newScript + "<" + "/script>\n</body>\n</html>"
+    );
+  }
+
+  document.getElementById("app").addEventListener("click", function (e) {
+    var ticket = e.target.closest(".ticket");
+    if (ticket) { view = { screen: "passport", id: ticket.getAttribute("data-id") }; render(); return; }
+
+    var trombiTile = e.target.closest(".trombi-tile");
+    if (trombiTile) { view = { screen: "passport", id: trombiTile.getAttribute("data-id") }; render(); return; }
+
+    if (e.target.closest("#teacher-toggle")) { view = { screen: "teacher" }; render(); return; }
+    if (e.target.closest("#trombi-toggle")) { view = { screen: "trombi" }; render(); return; }
+    if (e.target.closest("#back-cover")) { view = { screen: "cover" }; render(); return; }
+
+    var badgeToggle = e.target.closest(".badge-toggle");
+    if (badgeToggle) { toggleBadge(badgeToggle.getAttribute("data-student"), badgeToggle.getAttribute("data-badge")); render(); return; }
+
+    var removeBadge = e.target.closest(".remove-badge-type");
+    if (removeBadge) { removeBadgeType(removeBadge.getAttribute("data-badge")); render(); return; }
+
+    var ambPlus = e.target.closest(".amb-plus");
+    if (ambPlus) { adjustAmbassador(ambPlus.getAttribute("data-student"), 1); render(); return; }
+
+    var ambMinus = e.target.closest(".amb-minus");
+    if (ambMinus) { adjustAmbassador(ambMinus.getAttribute("data-student"), -1); render(); return; }
+
+    var removeBtn = e.target.closest(".remove-student");
+    if (removeBtn) { removeStudent(removeBtn.getAttribute("data-student")); render(); return; }
+
+    var removePhoto = e.target.closest(".remove-photo");
+    if (removePhoto) { clearPhoto(removePhoto.getAttribute("data-student")); render(); return; }
+
+    if (e.target.closest("#banner-reset")) { clearBanner(); render(); return; }
+
+    if (e.target.closest("#publish-btn")) { publishData(); return; }
+  });
+
+  document.getElementById("app").addEventListener("change", async function (e) {
+    var groupSelect = e.target.closest(".student-group-select");
+    if (groupSelect) {
+      setGroup(groupSelect.getAttribute("data-student"), parseInt(groupSelect.value, 10));
+      render();
+      return;
+    }
+
+    var studentPhotoInput = e.target.closest(".student-photo-input");
+    if (studentPhotoInput) {
+      var file1 = studentPhotoInput.files && studentPhotoInput.files[0];
+      if (file1) {
+        try {
+          var url1 = await fileToResizedDataURL(file1, 240, "image/jpeg", 0.85);
+          setPhoto(studentPhotoInput.getAttribute("data-student"), url1);
+          render();
+        } catch (err) { /* image illisible, on ignore silencieusement */ }
+      }
+      return;
+    }
+
+    var selfPhotoInput = e.target.closest(".self-photo-input");
+    if (selfPhotoInput) {
+      var file2 = selfPhotoInput.files && selfPhotoInput.files[0];
+      if (file2) {
+        try {
+          var url2 = await fileToResizedDataURL(file2, 240, "image/jpeg", 0.85);
+          setPhoto(selfPhotoInput.getAttribute("data-student"), url2);
+          render();
+        } catch (err) { /* image illisible, on ignore silencieusement */ }
+      }
+    }
+  });
+
+  document.getElementById("app").addEventListener("submit", async function (e) {
+    if (e.target && e.target.id === "add-student-form") {
+      e.preventDefault();
+      var input = document.getElementById("new-student-name");
+      var groupSelect = document.getElementById("new-student-group");
+      var name = input.value.trim();
+      var groupId = parseInt(groupSelect.value, 10) || 1;
+      if (name) { addStudent(name, groupId); render(); }
+      return;
+    }
+
+    if (e.target && e.target.id === "add-badge-form") {
+      e.preventDefault();
+      var emoji = document.getElementById("new-badge-emoji").value.trim();
+      var label = document.getElementById("new-badge-label").value.trim();
+      var hint = document.getElementById("new-badge-hint").value.trim();
+      var fileInput = document.getElementById("new-badge-image");
+      var file = fileInput && fileInput.files && fileInput.files[0];
+      var statusEl = document.getElementById("badge-form-status");
+      if (!label) return;
+      var image = null;
+      if (file) {
+        if (statusEl) statusEl.textContent = "Traitement de l’image…";
+        try {
+          image = await fileToResizedDataURL(file, 160);
+        } catch (err) {
+          if (statusEl) statusEl.textContent = "Image illisible, badge créé sans image.";
+        }
+      }
+      addBadgeType(emoji, label, hint, image);
+      render();
+      return;
+    }
+
+    if (e.target && e.target.id === "banner-form") {
+      e.preventDefault();
+      var titleVal = document.getElementById("banner-title").value.trim();
+      var subtitleVal = document.getElementById("banner-subtitle").value.trim();
+      var bannerFileInput = document.getElementById("banner-image");
+      var bannerFile = bannerFileInput && bannerFileInput.files && bannerFileInput.files[0];
+      var bannerStatusEl = document.getElementById("banner-form-status");
+      updateSettings(titleVal, subtitleVal);
+      if (bannerFile) {
+        if (bannerStatusEl) bannerStatusEl.textContent = "Traitement de l’image…";
+        try {
+          var bannerUrl = await fileToResizedDataURL(bannerFile, 960, "image/jpeg", 0.82);
+          setBanner(bannerUrl);
+        } catch (err) {
+          if (bannerStatusEl) bannerStatusEl.textContent = "Image illisible, bannière non modifiée.";
+          render();
+          return;
+        }
+      }
+      render();
+      var statusAfter = document.getElementById("banner-form-status");
+      if (statusAfter) statusAfter.textContent = "Bannière mise à jour — pense à cliquer sur « Enregistrer les modifications ».";
+      return;
+    }
+
+    if (e.target && e.target.classList && e.target.classList.contains("note-form")) {
+      e.preventDefault();
+      var studentId = e.target.getAttribute("data-student");
+      var textarea = e.target.querySelector(".note-textarea");
+      setNote(studentId, textarea ? textarea.value.trim() : "");
+      render();
+    }
+  });
+
+  render();
+})();
+</script>
