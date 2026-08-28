@@ -248,9 +248,21 @@
   /* ---------- Trombinoscope ---------- */
   .trombi-title { font-size: 1.4rem; margin: 0 0 20px; }
   .trombi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 18px 12px; }
-  .trombi-tile { display: flex; flex-direction: column; align-items: center; gap: 8px; background: none; border: none; padding: 0; }
-  .trombi-tile .avatar-lg { width: 82px; height: 82px; font-size: 1.6rem; }
-  .trombi-tile span { font-size: 0.8rem; font-weight: 600; text-align: center; }
+  .trombi-tile, .admin-tile { display: flex; flex-direction: column; align-items: center; gap: 8px; background: none; border: none; padding: 0; }
+  .trombi-tile .avatar-lg, .admin-tile .avatar-lg { width: 82px; height: 82px; font-size: 1.6rem; }
+  .trombi-tile span, .admin-tile span { font-size: 0.8rem; font-weight: 600; text-align: center; }
+
+  .group-tiles { display: flex; flex-direction: column; gap: 10px; margin: 18px 0; }
+  .group-tile {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+    padding: 14px 16px; text-align: left; width: 100%;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .group-tile:hover { border-color: var(--gold); transform: translateY(-1px); }
+  .group-tile-dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+  .group-tile-name { flex: 1; font-weight: 600; }
+  .group-tile-count { font-family: "Courier Prime", monospace; font-size: 0.78rem; color: var(--text-dim); flex: none; }
 
   /* ---------- Admin mode ---------- */
   .teacher h2 { font-size: 1.5rem; margin-bottom: 6px; }
@@ -402,10 +414,10 @@
   "use strict";
 
   var GROUPS = [
-    { id: 1, label: "Groupe 1", color: "#6B1E23", text: "#F3ECDD" },
-    { id: 2, label: "Groupe 2", color: "#A9821E", text: "#201804" },
-    { id: 3, label: "Groupe 3", color: "#2B3A55", text: "#F3ECDD" },
-    { id: 4, label: "Groupe 4", color: "#3F5B45", text: "#F3ECDD" }
+    { id: 1, label: "Cours du Lundi (Boris Vian)", color: "#6B1E23", text: "#F3ECDD" },
+    { id: 2, label: "Cours du Lundi (Albert Dubout)", color: "#A9821E", text: "#201804" },
+    { id: 3, label: "Cours débutant du Mardi (PEV)", color: "#2B3A55", text: "#F3ECDD" },
+    { id: 4, label: "Cours Jeudi ST BRES", color: "#3F5B45", text: "#F3ECDD" }
   ];
 
   var DATA = /*DATA_START*/{"settings":{"title":"Passeport Impro","subtitle":"Chaque séance, un badge à gagner. Chaque badge, une reconnaissance.","banner":null},"students":[{"id":"s1","name":"Léa","group":1,"ambassadorWins":2,"badges":["feu-de-scene","pilier-du-choeur"],"note":"Continue comme ça, ta présence illumine le groupe !","photo":null},{"id":"s2","name":"Nathan","group":2,"ambassadorWins":0,"badges":[],"note":"","photo":null},{"id":"s3","name":"Inès","group":3,"ambassadorWins":4,"badges":["grande-oreille","funambule","etincelle","phenix"],"note":"","photo":null},{"id":"s4","name":"Mateo","group":4,"ambassadorWins":0,"badges":[],"note":"","photo":null},{"id":"s5","name":"Chloé","group":1,"ambassadorWins":1,"badges":["cameleon"],"note":"","photo":null}],"badges":[{"key":"grande-oreille","emoji":"🦉","label":"Grande Oreille","hint":"Une écoute qui change toute la scène."},{"key":"funambule","emoji":"🪶","label":"Funambule","hint":"A osé lâcher prise sans filet."},{"key":"etincelle","emoji":"⚡","label":"Étincelle","hint":"A lancé une proposition qui a tout changé."},{"key":"phenix","emoji":"🔥","label":"Phénix","hint":"S’est relevé·e après un raté avec panache."},{"key":"feu-de-scene","emoji":"🌟","label":"Feu de Scène","hint":"Une énergie qui embrase le plateau."},{"key":"pilier-du-choeur","emoji":"🤝","label":"Pilier du Chœur","hint":"Toujours là pour porter le groupe."},{"key":"cameleon","emoji":"🎭","label":"Caméléon","hint":"Change de personnage avec une aisance folle."},{"key":"fou-rire","emoji":"😂","label":"Fou Rire Assuré","hint":"A fait rire toute la salle."},{"key":"batisseur-de-mondes","emoji":"🗺️","label":"Bâtisseur de Mondes","hint":"Crée un univers qu’on croirait réel."},{"key":"coeur-de-la-troupe","emoji":"🕊️","label":"Cœur de la Troupe","hint":"Bienveillant·e avec toute la troupe."}]}/*DATA_END*/;
@@ -769,6 +781,16 @@
     );
   }
 
+  function publishBarHtml() {
+    return (
+      '<div class="publish-bar">' +
+        '<button id="publish-btn">Télécharger la page mise à jour</button>' +
+        '<span id="publish-status"></span>' +
+      "</div>" +
+      '<p class="hint">Ce bouton télécharge un nouveau fichier sur ton ordinateur. Remplace-le ensuite là où tu héberges le passeport pour que tout le monde voie la mise à jour.</p>'
+    );
+  }
+
   function renderTeacher() {
     var groupOptionsForAdd = GROUPS.map(function (g) {
       return '<option value="' + g.id + '">' + esc(g.label) + "</option>";
@@ -784,16 +806,14 @@
         }).join("")
       : '<span class="amb-empty">Aucun badge pour l’instant — crée le premier ci-dessus.</span>';
 
-    var groupsHtml = GROUPS.map(function (g) {
-      var members = studentsByGroup(g.id);
-      var editors = members.length
-        ? members.map(studentEditorHtml).join("")
-        : '<p class="empty-note">Aucun·e élève dans ce groupe pour l’instant.</p>';
+    var groupTilesHtml = GROUPS.map(function (g) {
+      var count = studentsByGroup(g.id).length;
       return (
-        '<div class="group-section">' +
-          '<div class="group-header"><span class="group-dot" style="background:' + g.color + '"></span><span class="group-name">' + esc(g.label) + "</span></div>" +
-          editors +
-        "</div>"
+        '<button class="group-tile" data-group="' + g.id + '">' +
+          '<span class="group-tile-dot" style="background:' + g.color + '"></span>' +
+          '<span class="group-tile-name">' + esc(g.label) + "</span>" +
+          '<span class="group-tile-count">' + count + (count > 1 ? " élèves" : " élève") + "</span>" +
+        "</button>"
       );
     }).join("");
 
@@ -801,7 +821,7 @@
       '<div class="teacher">' +
         '<button class="back-btn" id="back-cover">&larr; Retour</button>' +
         "<h2>Mode admin</h2>" +
-        '<p class="hint">Crée des badges, gère les groupes et les photos, laisse un mot à chaque élève, puis enregistre pour que tout le monde voie la mise à jour.</p>' +
+        '<p class="hint">Crée des badges, gère la bannière, puis choisis un groupe pour retrouver un·e élève.</p>' +
         '<div class="badge-catalog-manager">' +
           "<h3>🖼️ Bannière du passeport</h3>" +
           '<form id="banner-form">' +
@@ -831,12 +851,47 @@
           '<select id="new-student-group">' + groupOptionsForAdd + "</select>" +
           "<button type=\"submit\">Ajouter</button>" +
         "</form>" +
-        '<div class="teacher-roster">' + groupsHtml + "</div>" +
-        '<div class="publish-bar">' +
-          '<button id="publish-btn">Télécharger la page mise à jour</button>' +
-          '<span id="publish-status"></span>' +
-        "</div>" +
-        '<p class="hint">Ce bouton télécharge un nouveau fichier sur ton ordinateur. Remplace-le ensuite là où tu héberges le passeport pour que tout le monde voie la mise à jour.</p>' +
+        "<h3>Groupes</h3>" +
+        '<div class="group-tiles">' + groupTilesHtml + "</div>" +
+        publishBarHtml() +
+      "</div>"
+    );
+  }
+
+  function renderTeacherGroup(groupId) {
+    var g = GROUPS.filter(function (gr) { return gr.id === groupId; })[0];
+    if (!g) { return renderTeacher(); }
+    var members = studentsByGroup(g.id);
+    var tilesHtml = members.length
+      ? members.map(function (s) {
+          return (
+            '<button class="admin-tile" data-id="' + esc(s.id) + '" data-group="' + g.id + '">' +
+              avatarHtml(s, "lg") +
+              "<span>" + esc(s.name) + "</span>" +
+            "</button>"
+          );
+        }).join("")
+      : '<p class="empty-note">Aucun·e élève dans ce groupe pour l’instant.</p>';
+
+    return (
+      '<div class="teacher">' +
+        '<button class="back-btn" id="back-admin-root">&larr; Retour aux groupes</button>' +
+        '<div class="group-header"><span class="group-dot" style="background:' + g.color + '"></span><span class="group-name">' + esc(g.label) + "</span></div>" +
+        '<p class="hint">Clique sur un·e élève pour modifier sa fiche.</p>' +
+        '<div class="trombi-grid">' + tilesHtml + "</div>" +
+        publishBarHtml() +
+      "</div>"
+    );
+  }
+
+  function renderTeacherStudent(studentId, groupId) {
+    var s = findStudent(studentId);
+    if (!s) { return renderTeacherGroup(groupId); }
+    return (
+      '<div class="teacher">' +
+        '<button class="back-btn" id="back-admin-group" data-group="' + groupId + '">&larr; Retour au groupe</button>' +
+        studentEditorHtml(s) +
+        publishBarHtml() +
       "</div>"
     );
   }
@@ -845,6 +900,8 @@
     var app = document.getElementById("app");
     if (view.screen === "passport") app.innerHTML = renderPassport(view.id);
     else if (view.screen === "teacher") app.innerHTML = renderTeacher();
+    else if (view.screen === "teacher-group") app.innerHTML = renderTeacherGroup(view.groupId);
+    else if (view.screen === "teacher-student") app.innerHTML = renderTeacherStudent(view.studentId, view.groupId);
     else if (view.screen === "trombi") app.innerHTML = renderTrombi();
     else app.innerHTML = renderCover();
   }
@@ -898,6 +955,17 @@
     if (e.target.closest("#teacher-toggle")) { view = { screen: "teacher" }; render(); return; }
     if (e.target.closest("#trombi-toggle")) { view = { screen: "trombi" }; render(); return; }
     if (e.target.closest("#back-cover")) { view = { screen: "cover" }; render(); return; }
+
+    var groupTile = e.target.closest(".group-tile");
+    if (groupTile) { view = { screen: "teacher-group", groupId: parseInt(groupTile.getAttribute("data-group"), 10) }; render(); return; }
+
+    var adminTile = e.target.closest(".admin-tile");
+    if (adminTile) { view = { screen: "teacher-student", studentId: adminTile.getAttribute("data-id"), groupId: parseInt(adminTile.getAttribute("data-group"), 10) }; render(); return; }
+
+    if (e.target.closest("#back-admin-root")) { view = { screen: "teacher" }; render(); return; }
+
+    var backAdminGroup = e.target.closest("#back-admin-group");
+    if (backAdminGroup) { view = { screen: "teacher-group", groupId: parseInt(backAdminGroup.getAttribute("data-group"), 10) }; render(); return; }
 
     var badgeToggle = e.target.closest(".badge-toggle");
     if (badgeToggle) { toggleBadge(badgeToggle.getAttribute("data-student"), badgeToggle.getAttribute("data-badge")); render(); return; }
