@@ -3,6 +3,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700&family=Courier+Prime:wght@400;700&display=swap">
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js"></script>
 
 <style id="app-style">
   :root {
@@ -405,9 +407,23 @@
   }
   #publish-btn:hover { background: var(--gold-bright); }
   #publish-status { font-size: 0.85rem; color: var(--text-dim); }
+
+  .sync-indicator {
+    position: fixed; right: 14px; bottom: 14px; max-width: min(280px, calc(100vw - 28px));
+    font-family: "Courier Prime", monospace; font-size: 0.72rem; line-height: 1.3;
+    padding: 7px 11px; border-radius: 3px; z-index: 50;
+    background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);
+    box-shadow: var(--shadow);
+  }
+  .sync-indicator.ok { color: #2B3A55; border-color: #2B3A55; }
+  .sync-indicator.err { color: var(--curtain); border-color: var(--curtain); }
+  .fb-config-details summary { cursor: pointer; font-weight: 600; margin: 10px 0 6px; }
+  #fb-config-status, #fb-reconnect { font-size: 0.85rem; }
+  #fb-reconnect { margin: 6px 0; }
 </style>
 
 <div id="app"></div>
+<div id="sync-indicator" class="sync-indicator" hidden></div>
 
 <script id="app-script">
 (function () {
@@ -424,6 +440,156 @@
 
   var data = JSON.parse(JSON.stringify(DATA));
   var view = { screen: "cover" };
+  var fb = { app: null, db: null, ready: false };
+
+  function fbConfigValid(cfg) {
+    return !!(cfg && cfg.apiKey && cfg.authDomain && cfg.projectId && cfg.appId);
+  }
+
+  function fbInit() {
+    var cfg = data.settings.firebase;
+    if (!fbConfigValid(cfg) || typeof firebase === "undefined") {
+      fb.ready = false;
+      return Promise.resolve(false);
+    }
+    var teardown = fb.app ? fb.app.delete().catch(function () {}) : Promise.resolve();
+    return teardown.then(function () {
+      try {
+        fb.app = firebase.initializeApp(cfg);
+        fb.db = firebase.firestore();
+        fb.ready = true;
+      } catch (err) {
+        fb.app = null; fb.db = null; fb.ready = false;
+      }
+      return fb.ready;
+    });
+  }
+
+  function fbLoadAll() {
+    if (!fb.ready) return Promise.resolve({ ok: false, seeded: true });
+    return Promise.all([
+      fb.db.collection("students").get(),
+      fb.db.collection("badges").get(),
+      fb.db.collection("config").doc("settings").get(),
+      fb.db.collection("config").doc("meta").get()
+    ]).then(function (results) {
+      var studentsSnap = results[0], badgesSnap = results[1], settingsDoc = results[2], metaDoc = results[3];
+      var remoteStudents = [];
+      studentsSnap.forEach(function (doc) { remoteStudents.push(Object.assign({ id: doc.id }, doc.data())); });
+      var remoteBadges = [];
+      badgesSnap.forEach(function (doc) { remoteBadges.push(Object.assign({ key: doc.id }, doc.data())); });
+      return {
+        ok: true,
+        seeded: metaDoc.exists,
+        students: remoteStudents,
+        badges: remoteBadges,
+        settings: settingsDoc.exists ? settingsDoc.data() : null
+      };
+    }).catch(function () {
+      return { ok: false, seeded: true };
+    });
+  }
+
+  function fbSeed() {
+    if (!fb.ready) return Promise.resolve(false);
+    var batch = fb.db.batch();
+    data.students.forEach(function (s) {
+      var copy = Object.assign({}, s);
+      delete copy.id;
+      batch.set(fb.db.collection("students").doc(s.id), copy);
+    });
+    data.badges.forEach(function (b) {
+      var copy = Object.assign({}, b);
+      delete copy.key;
+      batch.set(fb.db.collection("badges").doc(b.key), copy);
+    });
+    batch.set(fb.db.collection("config").doc("settings"), {
+      title: data.settings.title, subtitle: data.settings.subtitle, banner: data.settings.banner
+    });
+    batch.set(fb.db.collection("config").doc("meta"), { seeded: true });
+    return batch.commit().then(function () { return true; }).catch(function () { return false; });
+  }
+
+  function fbWriteStudent(s) {
+    if (!fb.ready) return;
+    var copy = Object.assign({}, s);
+    delete copy.id;
+    fb.db.collection("students").doc(s.id).set(copy).catch(fbNotifyError);
+  }
+
+  function fbDeleteStudent(id) {
+    if (!fb.ready) return;
+    fb.db.collection("students").doc(id).delete().catch(fbNotifyError);
+  }
+
+  function fbWriteBadge(b) {
+    if (!fb.ready) return;
+    var copy = Object.assign({}, b);
+    delete copy.key;
+    fb.db.collection("badges").doc(b.key).set(copy).catch(fbNotifyError);
+  }
+
+  function fbDeleteBadge(key) {
+    if (!fb.ready) return;
+    fb.db.collection("badges").doc(key).delete().catch(fbNotifyError);
+  }
+
+  function fbWriteSettings() {
+    if (!fb.ready) return;
+    fb.db.collection("config").doc("settings").set({
+      title: data.settings.title, subtitle: data.settings.subtitle, banner: data.settings.banner
+    }).catch(fbNotifyError);
+  }
+
+  function fbNotifyError() {
+    var el = document.getElementById("sync-indicator");
+    if (el) {
+      el.hidden = false;
+      el.className = "sync-indicator err";
+      el.textContent = "⚠️ Échec de la sauvegarde en ligne — vérifie ta connexion.";
+    }
+  }
+
+  function updateSyncIndicator() {
+    var el = document.getElementById("sync-indicator");
+    if (!el) return;
+    if (!fbConfigValid(data.settings.firebase)) { el.hidden = true; return; }
+    el.hidden = false;
+    if (fb.ready) {
+      el.className = "sync-indicator ok";
+      el.textContent = "☁️ Sauvegarde en ligne active";
+    } else {
+      el.className = "sync-indicator err";
+      el.textContent = "⚠️ Sauvegarde en ligne indisponible (mode local)";
+    }
+  }
+
+  function connectAndSync() {
+    return fbInit().then(function (ok) {
+      if (!ok) { render(); updateSyncIndicator(); return; }
+      return fbLoadAll().then(function (result) {
+        if (!result.ok) { render(); updateSyncIndicator(); return; }
+        if (!result.seeded) {
+          // Rien en ligne pour l’instant : on y envoie les données actuelles (locales), sans y toucher.
+          return fbSeed().then(function () { render(); updateSyncIndicator(); });
+        }
+        // Déjà initialisé en ligne : on prend la version en ligne comme référence.
+        data.students = result.students;
+        data.badges = result.badges;
+        if (result.settings) {
+          data.settings.title = result.settings.title || data.settings.title;
+          data.settings.subtitle = result.settings.subtitle != null ? result.settings.subtitle : data.settings.subtitle;
+          data.settings.banner = result.settings.banner !== undefined ? result.settings.banner : data.settings.banner;
+        }
+        render();
+        updateSyncIndicator();
+      });
+    });
+  }
+
+  function setFirebaseConfig(cfg) {
+    data.settings.firebase = cfg;
+  }
 
   function esc(str) {
     return String(str).replace(/[&<>"']/g, function (c) {
@@ -530,70 +696,86 @@
     if (!s) return;
     var idx = s.badges.indexOf(key);
     if (idx === -1) s.badges.push(key); else s.badges.splice(idx, 1);
+    fbWriteStudent(s);
   }
 
   function addBadgeType(emoji, label, hint, image) {
-    data.badges.push({ key: slugify(label), emoji: emoji || "🏅", label: label, hint: hint || "", image: image || null });
+    var b = { key: slugify(label), emoji: emoji || "🏅", label: label, hint: hint || "", image: image || null };
+    data.badges.push(b);
+    fbWriteBadge(b);
   }
 
   function removeBadgeType(key) {
     data.badges = data.badges.filter(function (b) { return b.key !== key; });
     data.students.forEach(function (s) {
-      s.badges = s.badges.filter(function (k) { return k !== key; });
+      var idx = s.badges.indexOf(key);
+      if (idx !== -1) { s.badges.splice(idx, 1); fbWriteStudent(s); }
     });
+    fbDeleteBadge(key);
   }
 
   function adjustAmbassador(studentId, delta) {
     var s = findStudent(studentId);
     if (!s) return;
     s.ambassadorWins = Math.max(0, (s.ambassadorWins || 0) + delta);
+    fbWriteStudent(s);
   }
 
   function setGroup(studentId, groupId) {
     var s = findStudent(studentId);
     if (!s) return;
     s.group = groupId;
+    fbWriteStudent(s);
   }
 
   function setNote(studentId, note) {
     var s = findStudent(studentId);
     if (!s) return;
     s.note = note;
+    fbWriteStudent(s);
   }
 
   function setPhoto(studentId, url) {
     var s = findStudent(studentId);
     if (!s) return;
     s.photo = url;
+    fbWriteStudent(s);
   }
 
   function clearPhoto(studentId) {
     var s = findStudent(studentId);
     if (!s) return;
     s.photo = null;
+    fbWriteStudent(s);
   }
 
   function updateSettings(title, subtitle) {
     data.settings.title = title || "Passeport Impro";
     data.settings.subtitle = subtitle || "";
+    fbWriteSettings();
   }
 
   function setBanner(url) {
     data.settings.banner = url;
+    fbWriteSettings();
   }
 
   function clearBanner() {
     data.settings.banner = null;
+    fbWriteSettings();
   }
 
   function addStudent(name, groupId) {
     var id = "s" + Date.now() + Math.floor(Math.random() * 1000);
-    data.students.push({ id: id, name: name, group: groupId, ambassadorWins: 0, badges: [], note: "", photo: null });
+    var s = { id: id, name: name, group: groupId, ambassadorWins: 0, badges: [], note: "", photo: null };
+    data.students.push(s);
+    fbWriteStudent(s);
   }
 
   function removeStudent(id) {
     data.students = data.students.filter(function (s) { return s.id !== id; });
     if (view.screen === "passport" && view.id === id) view = { screen: "cover" };
+    fbDeleteStudent(id);
   }
 
   function renderCover() {
@@ -702,7 +884,7 @@
             '<label class="photo-upload-btn">📷 ' + (s.photo ? "Changer ma photo" : "Ajouter ma photo") +
               '<input type="file" accept="image/*" class="self-photo-input" data-student="' + esc(s.id) + '">' +
             "</label>" +
-            '<p class="photo-hint">Visible de tous une fois enregistrée par l’admin.</p>' +
+            '<p class="photo-hint">' + (fb.ready ? "Visible de tous automatiquement." : "Visible de tous une fois enregistrée par l’admin.") + "</p>" +
             '<div class="passport-name">' + esc(s.name) + "</div>" +
             '<div class="passport-number mono">' + passportNumber(index) + "</div>" +
             '<span class="group-pill" style="background:' + group.color + ";color:" + group.text + '">' + esc(group.label) + "</span>" +
@@ -791,6 +973,46 @@
     );
   }
 
+  function fbConfigFormHtml() {
+    var cfg = data.settings.firebase || {};
+    function val(k) { return esc(cfg[k] || ""); }
+    return (
+      '<form id="firebase-config-form">' +
+        '<input type="text" id="fb-apiKey" placeholder="apiKey" value="' + val("apiKey") + '" required>' +
+        '<input type="text" id="fb-authDomain" placeholder="authDomain" value="' + val("authDomain") + '" required>' +
+        '<input type="text" id="fb-projectId" placeholder="projectId" value="' + val("projectId") + '" required>' +
+        '<input type="text" id="fb-storageBucket" placeholder="storageBucket (optionnel)" value="' + val("storageBucket") + '">' +
+        '<input type="text" id="fb-messagingSenderId" placeholder="messagingSenderId (optionnel)" value="' + val("messagingSenderId") + '">' +
+        '<input type="text" id="fb-appId" placeholder="appId" value="' + val("appId") + '" required>' +
+        "<button type=\"submit\">Enregistrer la configuration</button>" +
+      "</form>" +
+      '<span id="fb-config-status"></span>'
+    );
+  }
+
+  function syncSectionHtml() {
+    var configured = fbConfigValid(data.settings.firebase);
+    if (!configured) {
+      return (
+        '<div class="badge-catalog-manager">' +
+          "<h3>☁️ Sauvegarde en ligne</h3>" +
+          '<p class="hint">Pas encore configurée : pour l’instant, seul le bouton en bas de page enregistre les changements, et les élèves ne peuvent pas sauvegarder leur propre photo. Colle ici les informations de ton projet Firebase (voir les instructions) pour que tout se sauvegarde automatiquement, pour tout le monde.</p>' +
+          fbConfigFormHtml() +
+        "</div>"
+      );
+    }
+    return (
+      '<div class="badge-catalog-manager">' +
+        "<h3>☁️ Sauvegarde en ligne</h3>" +
+        '<p class="hint">' + (fb.ready
+          ? "Connectée — chaque changement (badge, photo, note…) est sauvegardé automatiquement pour tout le monde."
+          : "Configurée, mais la connexion a échoué. Vérifie ta connexion internet, puis réessaie.") + "</p>" +
+        '<button type="button" id="fb-reconnect">🔄 Actualiser / réessayer la connexion</button>' +
+        '<details class="fb-config-details"><summary>Modifier la configuration</summary>' + fbConfigFormHtml() + "</details>" +
+      "</div>"
+    );
+  }
+
   function renderTeacher() {
     var groupOptionsForAdd = GROUPS.map(function (g) {
       return '<option value="' + g.id + '">' + esc(g.label) + "</option>";
@@ -822,6 +1044,7 @@
         '<button class="back-btn" id="back-cover">&larr; Retour</button>' +
         "<h2>Mode admin</h2>" +
         '<p class="hint">Crée des badges, gère la bannière, puis choisis un groupe pour retrouver un·e élève.</p>' +
+        syncSectionHtml() +
         '<div class="badge-catalog-manager">' +
           "<h3>🖼️ Bannière du passeport</h3>" +
           '<form id="banner-form">' +
@@ -939,8 +1162,11 @@
       "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n" +
       "<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n" +
       "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700&family=Courier+Prime:wght@400;700&display=swap\">\n" +
+      "<script src=\"https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js\"><" + "/script>\n" +
+      "<script src=\"https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js\"><" + "/script>\n" +
       "<style id=\"app-style\">" + styleText + "</style>\n</head>\n<body>\n" +
       "<div id=\"app\"></div>\n" +
+      "<div id=\"sync-indicator\" class=\"sync-indicator\" hidden></div>\n" +
       "<script id=\"app-script\">" + newScript + "<" + "/script>\n</body>\n</html>"
     );
   }
@@ -988,6 +1214,8 @@
     if (e.target.closest("#banner-reset")) { clearBanner(); render(); return; }
 
     if (e.target.closest("#publish-btn")) { publishData(); return; }
+
+    if (e.target.closest("#fb-reconnect")) { connectAndSync(); return; }
   });
 
   document.getElementById("app").addEventListener("change", async function (e) {
@@ -1079,7 +1307,11 @@
       }
       render();
       var statusAfter = document.getElementById("banner-form-status");
-      if (statusAfter) statusAfter.textContent = "Bannière mise à jour — pense à cliquer sur « Enregistrer les modifications ».";
+      if (statusAfter) {
+        statusAfter.textContent = fb.ready
+          ? "Bannière mise à jour ✓"
+          : "Bannière mise à jour — pense à cliquer sur « Télécharger la page mise à jour » en bas.";
+      }
       return;
     }
 
@@ -1089,9 +1321,39 @@
       var textarea = e.target.querySelector(".note-textarea");
       setNote(studentId, textarea ? textarea.value.trim() : "");
       render();
+      return;
+    }
+
+    if (e.target && e.target.id === "firebase-config-form") {
+      e.preventDefault();
+      var cfg = {
+        apiKey: document.getElementById("fb-apiKey").value.trim(),
+        authDomain: document.getElementById("fb-authDomain").value.trim(),
+        projectId: document.getElementById("fb-projectId").value.trim(),
+        storageBucket: document.getElementById("fb-storageBucket").value.trim(),
+        messagingSenderId: document.getElementById("fb-messagingSenderId").value.trim(),
+        appId: document.getElementById("fb-appId").value.trim()
+      };
+      var fbStatusEl = document.getElementById("fb-config-status");
+      if (!fbConfigValid(cfg)) {
+        if (fbStatusEl) fbStatusEl.textContent = "Il manque au moins un champ obligatoire (apiKey, authDomain, projectId, appId).";
+        return;
+      }
+      setFirebaseConfig(cfg);
+      if (fbStatusEl) fbStatusEl.textContent = "Connexion en cours…";
+      connectAndSync().then(function () {
+        var fbStatusEl2 = document.getElementById("fb-config-status");
+        if (fbStatusEl2) {
+          fbStatusEl2.textContent = fb.ready
+            ? "Connecté ! Clique maintenant sur « Télécharger la page mise à jour » puis remplace le fichier là où le site est hébergé — une dernière fois — pour activer la sauvegarde en ligne pour tout le monde."
+            : "Échec de connexion — vérifie les informations copiées depuis Firebase.";
+        }
+      });
+      return;
     }
   });
 
   render();
+  connectAndSync();
 })();
 </script>
