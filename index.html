@@ -1,11 +1,14 @@
-<title>Passeport Impro</title>
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Passeport Impro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700&family=Courier+Prime:wght@400;700&display=swap">
 <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js"></script>
-
 <style id="app-style">
   :root {
     --bg: #F3ECDD;
@@ -421,10 +424,10 @@
   #fb-config-status, #fb-reconnect { font-size: 0.85rem; }
   #fb-reconnect { margin: 6px 0; }
 </style>
-
+</head>
+<body>
 <div id="app"></div>
 <div id="sync-indicator" class="sync-indicator" hidden></div>
-
 <script id="app-script">
 (function () {
   "use strict";
@@ -436,7 +439,7 @@
     { id: 4, label: "Cours Jeudi ST BRES", color: "#3F5B45", text: "#F3ECDD" }
   ];
 
-  var DATA = /*DATA_START*/{"settings":{"title":"Passeport Impro","subtitle":"Chaque séance, un badge à gagner. Chaque badge, une reconnaissance.","banner":null},"students":[{"id":"s1","name":"Léa","group":1,"ambassadorWins":2,"badges":["feu-de-scene","pilier-du-choeur"],"note":"Continue comme ça, ta présence illumine le groupe !","photo":null},{"id":"s2","name":"Nathan","group":2,"ambassadorWins":0,"badges":[],"note":"","photo":null},{"id":"s3","name":"Inès","group":3,"ambassadorWins":4,"badges":["grande-oreille","funambule","etincelle","phenix"],"note":"","photo":null},{"id":"s4","name":"Mateo","group":4,"ambassadorWins":0,"badges":[],"note":"","photo":null},{"id":"s5","name":"Chloé","group":1,"ambassadorWins":1,"badges":["cameleon"],"note":"","photo":null}],"badges":[{"key":"grande-oreille","emoji":"🦉","label":"Grande Oreille","hint":"Une écoute qui change toute la scène."},{"key":"funambule","emoji":"🪶","label":"Funambule","hint":"A osé lâcher prise sans filet."},{"key":"etincelle","emoji":"⚡","label":"Étincelle","hint":"A lancé une proposition qui a tout changé."},{"key":"phenix","emoji":"🔥","label":"Phénix","hint":"S’est relevé·e après un raté avec panache."},{"key":"feu-de-scene","emoji":"🌟","label":"Feu de Scène","hint":"Une énergie qui embrase le plateau."},{"key":"pilier-du-choeur","emoji":"🤝","label":"Pilier du Chœur","hint":"Toujours là pour porter le groupe."},{"key":"cameleon","emoji":"🎭","label":"Caméléon","hint":"Change de personnage avec une aisance folle."},{"key":"fou-rire","emoji":"😂","label":"Fou Rire Assuré","hint":"A fait rire toute la salle."},{"key":"batisseur-de-mondes","emoji":"🗺️","label":"Bâtisseur de Mondes","hint":"Crée un univers qu’on croirait réel."},{"key":"coeur-de-la-troupe","emoji":"🕊️","label":"Cœur de la Troupe","hint":"Bienveillant·e avec toute la troupe."}]}/*DATA_END*/;
+  var DATA = /*DATA_START*/{"settings":{"title":"Passeport Impro","subtitle":"Chaque séance, un badge à gagner. Chaque badge, une reconnaissance.","banner":null,"firebase":{"apiKey":"AIzaSyA6alEkOCJC8CKp2ZproJjdLm06cs5CXHM","authDomain":"passeport-impro.firebaseapp.com","projectId":"passeport-impro","storageBucket":"passeport-impro.firebasestorage.app","messagingSenderId":"539167602597","appId":"1:539167602597:web:99e920b673e31e515b5a4c"}},"students":[{"id":"s1","name":"Léa","group":1,"ambassadorWins":2,"badges":["feu-de-scene","pilier-du-choeur"],"note":"Continue comme ça, ta présence illumine le groupe !","photo":null},{"id":"s2","name":"Nathan","group":2,"ambassadorWins":0,"badges":[],"note":"","photo":null},{"id":"s3","name":"Inès","group":3,"ambassadorWins":4,"badges":["grande-oreille","funambule","etincelle","phenix"],"note":"","photo":null},{"id":"s4","name":"Mateo","group":4,"ambassadorWins":0,"badges":[],"note":"","photo":null},{"id":"s5","name":"Chloé","group":1,"ambassadorWins":1,"badges":["cameleon"],"note":"","photo":null}],"badges":[{"key":"grande-oreille","emoji":"🦉","label":"Grande Oreille","hint":"Une écoute qui change toute la scène."},{"key":"funambule","emoji":"🪶","label":"Funambule","hint":"A osé lâcher prise sans filet."},{"key":"etincelle","emoji":"⚡","label":"Étincelle","hint":"A lancé une proposition qui a tout changé."},{"key":"phenix","emoji":"🔥","label":"Phénix","hint":"S’est relevé·e après un raté avec panache."},{"key":"feu-de-scene","emoji":"🌟","label":"Feu de Scène","hint":"Une énergie qui embrase le plateau."},{"key":"pilier-du-choeur","emoji":"🤝","label":"Pilier du Chœur","hint":"Toujours là pour porter le groupe."},{"key":"cameleon","emoji":"🎭","label":"Caméléon","hint":"Change de personnage avec une aisance folle."},{"key":"fou-rire","emoji":"😂","label":"Fou Rire Assuré","hint":"A fait rire toute la salle."},{"key":"batisseur-de-mondes","emoji":"🗺️","label":"Bâtisseur de Mondes","hint":"Crée un univers qu’on croirait réel."},{"key":"coeur-de-la-troupe","emoji":"🕊️","label":"Cœur de la Troupe","hint":"Bienveillant·e avec toute la troupe."}]}/*DATA_END*/;
 
   var data = JSON.parse(JSON.stringify(DATA));
   var view = { screen: "cover" };
@@ -1357,3 +1360,5 @@
   connectAndSync();
 })();
 </script>
+</body>
+</html>
