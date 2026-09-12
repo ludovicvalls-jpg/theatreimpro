@@ -251,9 +251,12 @@
   /* ---------- Trombinoscope ---------- */
   .trombi-title { font-size: 1.4rem; margin: 0 0 20px; }
   .trombi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 18px 12px; }
+  .trombi-grid-public { display: grid; grid-template-columns: repeat(auto-fill, minmax(164px, 1fr)); gap: 26px 16px; }
   .trombi-tile, .admin-tile { display: flex; flex-direction: column; align-items: center; gap: 8px; background: none; border: none; padding: 0; }
-  .trombi-tile .avatar-lg, .admin-tile .avatar-lg { width: 82px; height: 82px; font-size: 1.6rem; }
+  .admin-tile .avatar-lg { width: 82px; height: 82px; font-size: 1.6rem; }
+  .trombi-tile .avatar-lg { width: 164px; height: 164px; font-size: 3.2rem; }
   .trombi-tile span, .admin-tile span { font-size: 0.8rem; font-weight: 600; text-align: center; }
+  .trombi-tile span { font-size: 1rem; }
 
   .group-tiles { display: flex; flex-direction: column; gap: 10px; margin: 18px 0; }
   .group-tile {
@@ -360,13 +363,13 @@
   .student-group-select { padding: 5px 8px; border-radius: 3px; border: 1px solid var(--border); background: var(--surface-dim); color: var(--text); font-size: 0.82rem; }
 
   .badge-toggles { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 4px; }
-  .badge-toggle {
+  .badge-toggle, .badge-chip {
     display: inline-flex; align-items: center; gap: 6px;
     border-radius: 999px; padding: 6px 12px; font-size: 0.85rem;
     border: 1px solid var(--border); background: var(--surface-dim); color: var(--text-dim);
   }
   .badge-toggle:hover { border-color: var(--gold); }
-  .badge-toggle.earned { background: var(--gold); border-color: var(--gold); color: #201804; font-weight: 600; }
+  .badge-toggle.earned, .badge-chip.earned { background: var(--gold); border-color: var(--gold); color: #201804; font-weight: 600; }
 
   .skill-editor-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; }
   .skill-editor-name { font-size: 0.9rem; color: var(--text-dim); flex: 1; }
@@ -382,6 +385,9 @@
   .amb-editor-row .skill-editor-name { color: var(--gold); font-weight: 600; }
 
   .note-form { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
+  .pin-manage { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border); }
+  .pin-manage .pin-form { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pin-manage .pin-input { flex: 1 1 180px; }
   .note-label { display: block; font-size: 0.82rem; color: var(--gold); font-weight: 600; margin-bottom: 6px; }
   .note-textarea {
     width: 100%; min-height: 60px; padding: 8px 10px; border-radius: 3px; resize: vertical;
@@ -426,6 +432,13 @@
   .admin-lock h2 { margin-bottom: 4px; }
   .admin-lock form { display: flex; gap: 8px; margin-top: 14px; }
   .admin-lock input { flex: 1; }
+  .admin-lock form button {
+    background: var(--curtain); color: #fff; border: none; font-weight: 700;
+    padding: 0 16px; border-radius: 3px; white-space: nowrap;
+  }
+  .admin-lock form button:hover { background: var(--curtain-strong); }
+  #passport-setup-form { flex-direction: column; }
+  #passport-setup-form button { padding: 10px 16px; }
   .admin-lock-error { color: var(--curtain); font-size: 0.85rem; min-height: 1.2em; margin-top: 8px; }
 </style>
 
@@ -447,12 +460,13 @@
     { id: 4, label: "Cours Jeudi ST BRES", color: "#9A8CE0", text: "#140C33" }
   ];
 
-  var DATA = /*DATA_START*/{"settings":{"title":"Passeport Impro","subtitle":"Chaque séance, un badge à gagner. Chaque badge, une reconnaissance.","banner":null},"students":[{"id":"s1","name":"Léa","group":1,"ambassadorWins":2,"badges":["feu-de-scene","pilier-du-choeur"],"note":"Continue comme ça, ta présence illumine le groupe !","photo":null,"bio":"Toujours partante pour les scènes chantées.","parcours":"J'ai commencé par un stage découverte et je n'ai plus arrêté depuis.","experienceYears":2},{"id":"s2","name":"Nathan","group":2,"ambassadorWins":0,"badges":[],"note":"","photo":null,"bio":"","parcours":"","experienceYears":null},{"id":"s3","name":"Inès","group":3,"ambassadorWins":4,"badges":["grande-oreille","funambule","etincelle","phenix"],"note":"","photo":null,"bio":"","parcours":"","experienceYears":null},{"id":"s4","name":"Mateo","group":4,"ambassadorWins":0,"badges":[],"note":"","photo":null,"bio":"","parcours":"","experienceYears":null},{"id":"s5","name":"Chloé","group":1,"ambassadorWins":1,"badges":["cameleon"],"note":"","photo":null,"bio":"","parcours":"","experienceYears":null}],"badges":[{"key":"grande-oreille","emoji":"🦉","label":"Grande Oreille","hint":"Une écoute qui change toute la scène."},{"key":"funambule","emoji":"🪶","label":"Funambule","hint":"A osé lâcher prise sans filet."},{"key":"etincelle","emoji":"⚡","label":"Étincelle","hint":"A lancé une proposition qui a tout changé."},{"key":"phenix","emoji":"🔥","label":"Phénix","hint":"S’est relevé·e après un raté avec panache."},{"key":"feu-de-scene","emoji":"🌟","label":"Feu de Scène","hint":"Une énergie qui embrase le plateau."},{"key":"pilier-du-choeur","emoji":"🤝","label":"Pilier du Chœur","hint":"Toujours là pour porter le groupe."},{"key":"cameleon","emoji":"🎭","label":"Caméléon","hint":"Change de personnage avec une aisance folle."},{"key":"fou-rire","emoji":"😂","label":"Fou Rire Assuré","hint":"A fait rire toute la salle."},{"key":"batisseur-de-mondes","emoji":"🗺️","label":"Bâtisseur de Mondes","hint":"Crée un univers qu’on croirait réel."},{"key":"coeur-de-la-troupe","emoji":"🕊️","label":"Cœur de la Troupe","hint":"Bienveillant·e avec toute la troupe."}]}/*DATA_END*/;
+  var DATA = /*DATA_START*/{"settings":{"title":"Passeport Impro","subtitle":"Chaque séance, un badge à gagner. Chaque badge, une reconnaissance.","banner":null,"firebase":{"apiKey":"AIzaSyA6alEkOCJC8CKp2ZproJjdLm06cs5CXHM","authDomain":"passeport-impro.firebaseapp.com","projectId":"passeport-impro","storageBucket":"passeport-impro.firebasestorage.app","messagingSenderId":"539167602597","appId":"1:539167602597:web:99e920b673e31e515b5a4c"}},"students":[{"id":"s1","name":"Léa","group":1,"ambassadorWins":2,"badges":["feu-de-scene","pilier-du-choeur"],"note":"Continue comme ça, ta présence illumine le groupe !","photo":null,"bio":"Toujours partante pour les scènes chantées.","parcours":"J'ai commencé par un stage découverte et je n'ai plus arrêté depuis.","experienceYears":2,"pin":null},{"id":"s2","name":"Nathan","group":2,"ambassadorWins":0,"badges":[],"note":"","photo":null,"bio":"","parcours":"","experienceYears":null,"pin":null},{"id":"s3","name":"Inès","group":3,"ambassadorWins":4,"badges":["grande-oreille","funambule","etincelle","phenix"],"note":"","photo":null,"bio":"","parcours":"","experienceYears":null,"pin":null},{"id":"s4","name":"Mateo","group":4,"ambassadorWins":0,"badges":[],"note":"","photo":null,"bio":"","parcours":"","experienceYears":null,"pin":null},{"id":"s5","name":"Chloé","group":1,"ambassadorWins":1,"badges":["cameleon"],"note":"","photo":null,"bio":"","parcours":"","experienceYears":null,"pin":null}],"badges":[{"key":"grande-oreille","emoji":"🦉","label":"Grande Oreille","hint":"Une écoute qui change toute la scène."},{"key":"funambule","emoji":"🪶","label":"Funambule","hint":"A osé lâcher prise sans filet."},{"key":"etincelle","emoji":"⚡","label":"Étincelle","hint":"A lancé une proposition qui a tout changé."},{"key":"phenix","emoji":"🔥","label":"Phénix","hint":"S’est relevé·e après un raté avec panache."},{"key":"feu-de-scene","emoji":"🌟","label":"Feu de Scène","hint":"Une énergie qui embrase le plateau."},{"key":"pilier-du-choeur","emoji":"🤝","label":"Pilier du Chœur","hint":"Toujours là pour porter le groupe."},{"key":"cameleon","emoji":"🎭","label":"Caméléon","hint":"Change de personnage avec une aisance folle."},{"key":"fou-rire","emoji":"😂","label":"Fou Rire Assuré","hint":"A fait rire toute la salle."},{"key":"batisseur-de-mondes","emoji":"🗺️","label":"Bâtisseur de Mondes","hint":"Crée un univers qu’on croirait réel."},{"key":"coeur-de-la-troupe","emoji":"🕊️","label":"Cœur de la Troupe","hint":"Bienveillant·e avec toute la troupe."}]}/*DATA_END*/;
 
   var data = JSON.parse(JSON.stringify(DATA));
   var view = { screen: "cover" };
   var fb = { app: null, db: null, ready: false };
   var adminUnlocked = false;
+  var unlockedStudents = {};
 
   function fbConfigValid(cfg) {
     return !!(cfg && cfg.apiKey && cfg.authDomain && cfg.projectId && cfg.appId);
@@ -772,6 +786,13 @@
     fbWriteStudent(s);
   }
 
+  function setStudentPin(studentId, pin) {
+    var s = findStudent(studentId);
+    if (!s) return;
+    s.pin = pin || null;
+    fbWriteStudent(s);
+  }
+
   function setPhoto(studentId, url) {
     var s = findStudent(studentId);
     if (!s) return;
@@ -804,7 +825,7 @@
 
   function addStudent(name, groupId) {
     var id = "s" + Date.now() + Math.floor(Math.random() * 1000);
-    var s = { id: id, name: name, group: groupId, ambassadorWins: 0, badges: [], note: "", photo: null, bio: "", parcours: "", experienceYears: null };
+    var s = { id: id, name: name, group: groupId, ambassadorWins: 0, badges: [], note: "", photo: null, bio: "", parcours: "", experienceYears: null, pin: null };
     data.students.push(s);
     fbWriteStudent(s);
   }
@@ -870,7 +891,7 @@
       return (
         '<div class="group-section">' +
           '<div class="group-header"><span class="group-dot" style="background:' + g.color + '"></span><span class="group-name">' + esc(g.label) + "</span></div>" +
-          '<div class="trombi-grid">' + tilesHtml + "</div>" +
+          '<div class="trombi-grid-public">' + tilesHtml + "</div>" +
         "</div>"
       );
     }).join("");
@@ -893,6 +914,43 @@
           "<button type=\"submit\">Valider</button>" +
         "</form>" +
         '<p id="admin-lock-error" class="admin-lock-error"></p>' +
+      "</div>"
+    );
+  }
+
+  function renderStudentLock(id) {
+    var s = findStudent(id);
+    if (!s) {
+      return (
+        '<button class="back-btn" id="back-cover">&larr; Retour</button>' +
+        '<div class="admin-lock"><h2>🔒 Fiche protégée</h2><p class="hint">Entre ton code pour continuer.</p></div>'
+      );
+    }
+    if (s.pin) {
+      return (
+        '<button class="back-btn" id="passport-lock-cancel" data-id="' + esc(id) + '">&larr; Retour</button>' +
+        '<div class="admin-lock">' +
+          "<h2>🔒 Fiche protégée</h2>" +
+          '<p class="hint">Entre le code de ' + esc(s.name) + " pour la modifier.</p>" +
+          '<form id="passport-lock-form" data-student="' + esc(id) + '">' +
+            '<input type="password" id="passport-lock-input" placeholder="Ton code" autofocus>' +
+            "<button type=\"submit\">Valider</button>" +
+          "</form>" +
+          '<p id="passport-lock-error" class="admin-lock-error"></p>' +
+        "</div>"
+      );
+    }
+    return (
+      '<button class="back-btn" id="passport-lock-cancel" data-id="' + esc(id) + '">&larr; Retour</button>' +
+      '<div class="admin-lock">' +
+        "<h2>🔒 Protège la fiche de " + esc(s.name) + "</h2>" +
+        '<p class="hint">Si c’est ta fiche, choisis un code personnel. Il te sera redemandé à chaque visite pour que personne d’autre ne puisse la modifier.</p>' +
+        '<form id="passport-setup-form" data-student="' + esc(id) + '">' +
+          '<input type="password" id="passport-setup-input" placeholder="Choisis un code" autofocus>' +
+          '<input type="password" id="passport-setup-confirm" placeholder="Confirme le code">' +
+          "<button type=\"submit\">Activer et continuer</button>" +
+        "</form>" +
+        '<p id="passport-setup-error" class="admin-lock-error"></p>' +
       "</div>"
     );
   }
@@ -933,16 +991,79 @@
       ? '<button type="button" class="photo-zoom-trigger" data-photo="' + esc(s.photo) + '">' + avatarInner + "</button>"
       : avatarInner;
 
+    var unlocked = unlockedStudents[s.id] === true;
+
+    var photoBlock = unlocked
+      ? (
+          '<label class="photo-upload-btn">📷 ' + (s.photo ? "Changer ma photo" : "Ajouter ma photo") +
+            '<input type="file" accept="image/*" class="self-photo-input" data-student="' + esc(s.id) + '">' +
+          "</label>" +
+          '<p class="photo-hint">' + (fb.ready ? "Visible de tous automatiquement." : "Visible de tous une fois enregistrée par l’admin.") + "</p>"
+        )
+      : "";
+
+    var parcoursSummary = "";
+    if (s.experienceYears != null) { parcoursSummary += esc(s.experienceYears) + " an" + (s.experienceYears > 1 ? "s" : "") + " d’impro. "; }
+    if (s.parcours) { parcoursSummary += esc(s.parcours); }
+
+    var selfServiceBlock;
+    if (unlocked) {
+      var pinManageBlock = (
+        '<div class="pin-manage">' +
+          '<p class="hint">🔒 Ta fiche est protégée par un code — personne d’autre ne peut la modifier.</p>' +
+          '<form class="pin-form" data-student="' + esc(s.id) + '">' +
+            '<input type="text" class="pin-input" placeholder="Nouveau code (vide pour retirer la protection)" maxlength="30">' +
+            "<button type=\"submit\">Changer le code</button>" +
+          "</form>" +
+        "</div>"
+      );
+      selfServiceBlock = (
+        '<p class="stamps-heading">📜 Ma bio</p>' +
+        (s.bio ? '<p class="prof-note-text">' + esc(s.bio) + "</p>" : '<p class="empty-note">Pas encore de bio — présente-toi ci-dessous.</p>') +
+        '<form class="profile-form" data-student="' + esc(s.id) + '">' +
+          '<textarea class="profile-bio-input note-textarea" placeholder="Qui es-tu en tant qu’improvisateur·rice ?" maxlength="280">' + esc(s.bio || "") + "</textarea>" +
+          '<p class="stamps-heading" style="margin-top:14px;">🗺️ Mon parcours</p>' +
+          '<div class="years-row"><span>Années d’impro</span><input type="number" min="0" max="80" class="profile-years-input" value="' + (s.experienceYears != null ? esc(s.experienceYears) : "") + '"></div>' +
+          '<textarea class="profile-parcours-input note-textarea" placeholder="Troupes, spectacles, stages, ce qui t’a marqué…" maxlength="600">' + esc(s.parcours || "") + "</textarea>" +
+          '<button type="submit" class="note-save-btn">Enregistrer ma fiche</button>' +
+        "</form>" +
+
+        '<p class="stamps-heading" style="margin-top:22px;">🎒 Mes badges — choisis ceux qui te parlent</p>' +
+        '<div class="badge-toggles">' + badgeToggles + "</div>" +
+        '<p class="flavor">' + badgeFlavor(earned.length) + "</p>" +
+        pinManageBlock
+      );
+    } else {
+      var readonlyBadges = earned.length
+        ? earned.map(function (b) {
+            return '<span class="badge-chip earned" title="' + esc(b.hint || "") + '">' + badgeVisualHtml(b) + " " + esc(b.label) + "</span>";
+          }).join("")
+        : '<span class="amb-empty">Aucun badge pour l’instant.</span>';
+      var ownerCta = s.pin
+        ? '<button type="button" class="passport-unlock-btn" data-student="' + esc(s.id) + '">🔒 Modifier ma fiche (code perso)</button>'
+        : '<button type="button" class="passport-unlock-btn" data-student="' + esc(s.id) + '">🔒 Protéger et modifier ma fiche</button>';
+      selfServiceBlock = (
+        '<p class="stamps-heading">📜 Bio</p>' +
+        (s.bio ? '<p class="prof-note-text">' + esc(s.bio) + "</p>" : '<p class="empty-note">Pas encore de bio.</p>') +
+        '<p class="stamps-heading" style="margin-top:14px;">🗺️ Parcours</p>' +
+        (parcoursSummary ? '<p class="prof-note-text">' + parcoursSummary + "</p>" : '<p class="empty-note">Pas encore de parcours renseigné.</p>') +
+        '<p class="stamps-heading" style="margin-top:22px;">🎒 Badges</p>' +
+        '<div class="badge-toggles">' + readonlyBadges + "</div>" +
+        '<p class="flavor">' + badgeFlavor(earned.length) + "</p>" +
+        '<div class="pin-manage">' +
+          '<p class="hint">' + (s.pin ? "🔒 Seul·e le/la propriétaire de cette fiche (avec son code) peut la modifier." : "🔒 Cette fiche n’a pas encore de code. Si c’est la tienne, protège-la pour être seul·e à pouvoir la modifier.") + "</p>" +
+          ownerCta +
+        "</div>"
+      );
+    }
+
     return (
       '<button class="back-btn" id="back-cover">&larr; Retour</button>' +
       '<div class="passport-wrap">' +
         '<div class="passport-grid">' +
           '<div class="passport-id">' +
             avatarBlock +
-            '<label class="photo-upload-btn">📷 ' + (s.photo ? "Changer ma photo" : "Ajouter ma photo") +
-              '<input type="file" accept="image/*" class="self-photo-input" data-student="' + esc(s.id) + '">' +
-            "</label>" +
-            '<p class="photo-hint">' + (fb.ready ? "Visible de tous automatiquement." : "Visible de tous une fois enregistrée par l’admin.") + "</p>" +
+            photoBlock +
             '<div class="passport-name">' + esc(s.name) + "</div>" +
             '<div class="rank-title">' + esc(rankTitle(earned.length)) + "</div>" +
             '<div class="passport-number mono">' + passportNumber(index) + "</div>" +
@@ -950,19 +1071,7 @@
             '<span class="badge-count-pill">' + earned.length + " BADGE" + (earned.length > 1 ? "S" : "") + "</span>" +
           "</div>" +
           '<div class="passport-body">' +
-            '<p class="stamps-heading">📜 Ma bio</p>' +
-            (s.bio ? '<p class="prof-note-text">' + esc(s.bio) + "</p>" : '<p class="empty-note">Pas encore de bio — présente-toi ci-dessous.</p>') +
-            '<form class="profile-form" data-student="' + esc(s.id) + '">' +
-              '<textarea class="profile-bio-input note-textarea" placeholder="Qui es-tu en tant qu’improvisateur·rice ?" maxlength="280">' + esc(s.bio || "") + "</textarea>" +
-              '<p class="stamps-heading" style="margin-top:14px;">🗺️ Mon parcours</p>' +
-              '<div class="years-row"><span>Années d’impro</span><input type="number" min="0" max="80" class="profile-years-input" value="' + (s.experienceYears != null ? esc(s.experienceYears) : "") + '"></div>' +
-              '<textarea class="profile-parcours-input note-textarea" placeholder="Troupes, spectacles, stages, ce qui t’a marqué…" maxlength="600">' + esc(s.parcours || "") + "</textarea>" +
-              '<button type="submit" class="note-save-btn">Enregistrer ma fiche</button>' +
-            "</form>" +
-
-            '<p class="stamps-heading" style="margin-top:22px;">🎒 Mes badges — choisis ceux qui te parlent</p>' +
-            '<div class="badge-toggles">' + badgeToggles + "</div>" +
-            '<p class="flavor">' + badgeFlavor(earned.length) + "</p>" +
+            selfServiceBlock +
 
             '<div class="prof-note-block" style="margin-top:22px; padding-top:20px; border-top:1px dashed var(--border);">' +
               '<p class="stamps-heading">💬 Le mot du prof</p>' +
@@ -1040,6 +1149,11 @@
           '<textarea class="profile-parcours-input note-textarea" placeholder="Parcours…">' + esc(s.parcours || "") + "</textarea>" +
           '<button type="submit" class="note-save-btn">Enregistrer bio &amp; parcours</button>' +
         "</form>" +
+        '<form class="pin-form" data-student="' + esc(s.id) + '">' +
+          '<label class="note-label">🔒 Code perso de l’élève' + (s.pin ? " (actuel : " + esc(s.pin) + ")" : " (non défini)") + "</label>" +
+          '<input type="text" class="pin-input" placeholder="Nouveau code (vide pour retirer la protection)" maxlength="30">' +
+          '<button type="submit" class="note-save-btn">' + (s.pin ? "Changer / retirer le code" : "Définir un code") + "</button>" +
+        "</form>" +
       "</div>"
     );
   }
@@ -1047,6 +1161,7 @@
   function publishBarHtml() {
     return (
       '<div class="publish-bar">' +
+        '<p class="hint">⚠️ Sauvegarde en ligne indisponible pour le moment (pas de connexion ?) — en attendant, utilise ce bouton pour ne rien perdre.</p>' +
         '<button id="publish-btn">Télécharger la page mise à jour</button>' +
         '<span id="publish-status"></span>' +
       "</div>" +
@@ -1176,7 +1291,7 @@
         "</form>" +
         "<h3>Groupes</h3>" +
         '<div class="group-tiles">' + groupTilesHtml + "</div>" +
-        publishBarHtml() +
+        (fb.ready ? "" : publishBarHtml()) +
       "</div>"
     );
   }
@@ -1202,7 +1317,7 @@
         '<div class="group-header"><span class="group-dot" style="background:' + g.color + '"></span><span class="group-name">' + esc(g.label) + "</span></div>" +
         '<p class="hint">Clique sur un·e élève pour modifier sa fiche.</p>' +
         '<div class="trombi-grid">' + tilesHtml + "</div>" +
-        publishBarHtml() +
+        (fb.ready ? "" : publishBarHtml()) +
       "</div>"
     );
   }
@@ -1214,7 +1329,7 @@
       '<div class="teacher">' +
         '<button class="back-btn" id="back-admin-group" data-group="' + groupId + '">&larr; Retour au groupe</button>' +
         studentEditorHtml(s) +
-        publishBarHtml() +
+        (fb.ready ? "" : publishBarHtml()) +
       "</div>"
     );
   }
@@ -1223,6 +1338,7 @@
     var app = document.getElementById("app");
     if (view.screen === "passport") app.innerHTML = renderPassport(view.id);
     else if (view.screen === "admin-lock") app.innerHTML = renderAdminLock();
+    else if (view.screen === "passport-lock") app.innerHTML = renderStudentLock(view.id);
     else if (view.screen === "teacher") app.innerHTML = renderTeacher();
     else if (view.screen === "teacher-group") app.innerHTML = renderTeacherGroup(view.groupId);
     else if (view.screen === "teacher-student") app.innerHTML = renderTeacherStudent(view.studentId, view.groupId);
@@ -1293,6 +1409,12 @@
     if (e.target.closest("#admin-lock-cancel")) { view = { screen: "cover" }; render(); return; }
     if (e.target.closest("#trombi-toggle")) { view = { screen: "trombi" }; render(); return; }
     if (e.target.closest("#back-cover")) { view = { screen: "cover" }; render(); return; }
+
+    var passportUnlockBtn = e.target.closest(".passport-unlock-btn");
+    if (passportUnlockBtn) { view = { screen: "passport-lock", id: passportUnlockBtn.getAttribute("data-student") }; render(); return; }
+
+    var passportLockCancel = e.target.closest("#passport-lock-cancel");
+    if (passportLockCancel) { view = { screen: "passport", id: passportLockCancel.getAttribute("data-id") }; render(); return; }
 
     var groupTile = e.target.closest(".group-tile");
     if (groupTile) { view = { screen: "teacher-group", groupId: parseInt(groupTile.getAttribute("data-group"), 10) }; render(); return; }
@@ -1461,6 +1583,59 @@
       return;
     }
 
+    if (e.target && e.target.classList && e.target.classList.contains("pin-form")) {
+      e.preventDefault();
+      var pinStudentId = e.target.getAttribute("data-student");
+      var pinInput = e.target.querySelector(".pin-input");
+      var pinVal = pinInput ? pinInput.value.trim() : "";
+      setStudentPin(pinStudentId, pinVal);
+      unlockedStudents[pinStudentId] = true;
+      render();
+      return;
+    }
+
+    if (e.target && e.target.id === "passport-lock-form") {
+      e.preventDefault();
+      var plStudentId = e.target.getAttribute("data-student");
+      var plInput = document.getElementById("passport-lock-input");
+      var plErrorEl = document.getElementById("passport-lock-error");
+      var plStudent = findStudent(plStudentId);
+      var plAttempt = plInput ? plInput.value : "";
+      if (plStudent && plAttempt && plAttempt === plStudent.pin) {
+        unlockedStudents[plStudentId] = true;
+        view = { screen: "passport", id: plStudentId };
+        render();
+      } else if (plErrorEl) {
+        plErrorEl.textContent = "Code incorrect, réessaie.";
+        if (plInput) { plInput.value = ""; plInput.focus(); }
+      }
+      return;
+    }
+
+    if (e.target && e.target.id === "passport-setup-form") {
+      e.preventDefault();
+      var psStudentId = e.target.getAttribute("data-student");
+      var psInput = document.getElementById("passport-setup-input");
+      var psConfirm = document.getElementById("passport-setup-confirm");
+      var psErrorEl = document.getElementById("passport-setup-error");
+      var psVal1 = psInput ? psInput.value.trim() : "";
+      var psVal2 = psConfirm ? psConfirm.value.trim() : "";
+      if (!psVal1) {
+        if (psErrorEl) psErrorEl.textContent = "Choisis un code avant de continuer.";
+        return;
+      }
+      if (psVal1 !== psVal2) {
+        if (psErrorEl) psErrorEl.textContent = "Les deux codes ne correspondent pas, réessaie.";
+        if (psConfirm) { psConfirm.value = ""; psConfirm.focus(); }
+        return;
+      }
+      setStudentPin(psStudentId, psVal1);
+      unlockedStudents[psStudentId] = true;
+      view = { screen: "passport", id: psStudentId };
+      render();
+      return;
+    }
+
     if (e.target && e.target.id === "admin-lock-form") {
       e.preventDefault();
       var lockInput = document.getElementById("admin-lock-input");
@@ -1514,7 +1689,7 @@
         var fbStatusEl2 = document.getElementById("fb-config-status");
         if (fbStatusEl2) {
           fbStatusEl2.textContent = fb.ready
-            ? "Connecté ! Clique maintenant sur « Télécharger la page mise à jour » puis remplace le fichier là où le site est hébergé — une dernière fois — pour activer la sauvegarde en ligne pour tout le monde."
+            ? "Connecté ! Ce changement de projet Firebase n'est actif que dans ce navigateur pour l'instant — demande à Claude de te renvoyer une version du fichier avec ce projet intégré pour que ce soit permanent pour tout le monde."
             : "Échec de connexion — vérifie les informations copiées depuis Firebase.";
         }
       });
