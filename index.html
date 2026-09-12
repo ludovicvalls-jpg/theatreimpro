@@ -74,7 +74,9 @@
   .nav-links button { background: none; border: none; color: var(--text-dim); padding: 6px 10px; font-size: 0.88rem; border-radius: 3px; }
   .nav-links button:hover, .nav-links button.active { color: var(--text); background: var(--surface); }
 
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px 22px; margin-bottom: 18px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px 22px; margin-bottom: 18px; overflow: hidden; }
+  .profile-banner-img { display: block; width: calc(100% + 44px); max-height: 260px; object-fit: cover; margin: -20px -22px 18px; cursor: zoom-in; }
+  @media (max-width: 560px) { .profile-banner-img { max-height: 180px; } }
   .hint { color: var(--text-dim); font-size: 0.88rem; }
   .error-msg { color: var(--curtain); font-size: 0.85rem; margin-top: 8px; min-height: 1.1em; }
   .success-msg { color: var(--gold); font-size: 0.85rem; margin-top: 8px; min-height: 1.1em; }
@@ -411,6 +413,13 @@
     var pub = supa.storage.from(AVATAR_BUCKET).getPublicUrl(path);
     return { ok: true, url: pub.data.publicUrl };
   }
+  async function uploadBanner(file) {
+    var path = session.user.id + "/banner-" + Date.now() + "." + fileExt(file);
+    var res = await supa.storage.from(AVATAR_BUCKET).upload(path, file, { upsert: true });
+    if (res.error) return { error: res.error.message };
+    var pub = supa.storage.from(AVATAR_BUCKET).getPublicUrl(path);
+    return { ok: true, url: pub.data.publicUrl };
+  }
   async function uploadPhoto(ownerType, ownerId, file) {
     var path = ownerType + "/" + ownerId + "/" + Date.now() + "." + fileExt(file);
     var res = await supa.storage.from(PHOTOS_BUCKET).upload(path, file);
@@ -420,11 +429,9 @@
   }
   /* ================= Hauts faits (badges) & niveau ================= */
   var BADGE_DEFS = [
-    { key: "matchs100", emoji: "🏅", label: "100 matchs", test: function (p, s) { return (p.nb_matchs || 0) >= 100; } },
-    { key: "matchs500", emoji: "🥇", label: "500 matchs", test: function (p, s) { return (p.nb_matchs || 0) >= 500; } },
     { key: "spectacles50", emoji: "🔥", label: "50 spectacles", test: function (p, s) { return (p.nb_spectacles || 0) >= 50; } },
-    { key: "etranger", emoji: "🌍", label: "J’ai joué à l’étranger", test: function (p, s) { return s.paysCount >= 2; } },
-    { key: "festivalier", emoji: "🎪", label: "Festivalier·ère", test: function (p, s) { return s.tournoisCount >= 3; } },
+    { key: "etranger", emoji: "🌍", label: "Une expérience à l’étranger", test: function (p, s) { return s.paysCount >= 2; } },
+    { key: "stagiaire_assidu", emoji: "📚", label: "3 stages suivis", test: function (p, s) { return s.stagesCount >= 3; } },
     { key: "mc", emoji: "🎤", label: "Maître·sse de cérémonie", test: function (p, s) { return (p.roles || []).indexOf("mc") !== -1; } },
     { key: "arbitre", emoji: "🚩", label: "Arbitre", test: function (p, s) { return (p.roles || []).indexOf("arbitre") !== -1; } },
     { key: "coach", emoji: "🧑‍🏫", label: "Coach", test: function (p, s) { return (p.roles || []).indexOf("coach") !== -1; } },
@@ -437,7 +444,7 @@
     return BADGE_DEFS.filter(function (b) { return b.test(profile, s); });
   }
   function computeScore(profile, s) {
-    return (profile.nb_matchs || 0) * 1 + (profile.nb_spectacles || 0) * 2 + s.tournoisCount * 5 +
+    return (profile.nb_spectacles || 0) * 2 + s.stagesCount * 4 +
       (profile.annee_debut_impro ? (currentYear() - profile.annee_debut_impro) * 3 : 0) + s.troupesCount * 4;
   }
   var LEVEL_TITLES = ["Novice", "Apprenti·e", "Confirmé·e", "Vétéran·e", "Virtuose", "Légende"];
@@ -515,7 +522,7 @@
     return (
       '<div class="hero">' +
         "<h1>Le <span>Passeport</span> de l’improvisateur·rice</h1>" +
-        '<p>Crée ta fiche, retrouve ta troupe, garde une trace de tes matchs, tournois et rencontres — partout où l’impro t’emmène.</p>' +
+        '<p>Crée ta fiche, retrouve ta troupe, garde une trace de tes spectacles, stages et rencontres — partout où l’impro t’emmène.</p>' +
         '<div class="hero-actions">' +
           (session
             ? '<button class="btn" data-nav="#/mon-profil">Voir mon passeport</button>'
@@ -624,14 +631,14 @@
     if (!profile) return '<div class="card"><p>Ce profil n’existe pas (ou plus).</p></div>';
     var isOwner = session && session.user.id === profile.id;
 
-    var tournois = await fetchRelated("tournois", "profile", profile.id);
+    var stages = await fetchRelated("tournois", "profile", profile.id);
     var equipes = await fetchRelated("equipes_rencontrees", "profile", profile.id);
     var photos = await fetchRelated("photos", "profile", profile.id);
     var videos = await fetchRelated("videos", "profile", profile.id);
     var troupesLiees = await fetchTroupesDuProfil(profile.id);
 
-    var paysJoues = uniqueList(tournois.map(function (t) { return t.pays; }).filter(Boolean).concat(profile.pays ? [profile.pays] : []));
-    var stats = { tournoisCount: tournois.length, paysCount: paysJoues.length, equipesCount: equipes.length, troupesCount: troupesLiees.length };
+    var paysJoues = uniqueList(stages.map(function (t) { return t.pays; }).filter(Boolean).concat(profile.pays ? [profile.pays] : []));
+    var stats = { stagesCount: stages.length, paysCount: paysJoues.length, equipesCount: equipes.length, troupesCount: troupesLiees.length };
     var score = computeScore(profile, stats);
     var lvl = computeLevel(score);
     var badges = computeBadges(profile, stats);
@@ -645,6 +652,7 @@
     return (
       '<button class="back-btn" data-nav="#/joueurs">&larr; Retour aux improvisateurs</button>' +
       '<div class="card">' +
+        (profile.banner_url ? '<img src="' + esc(profile.banner_url) + '" class="profile-banner-img photo-zoom-trigger" data-photo="' + esc(profile.banner_url) + '" alt="">' : "") +
         '<div class="profile-head">' +
           avatarHtml(profile.avatar_url, profile.pseudo, "avatar-xl") +
           "<div>" +
@@ -657,9 +665,8 @@
         "</div>" +
 
         '<div class="stat-row">' +
-          statBox(profile.nb_matchs || 0, "matchs") +
           statBox(profile.nb_spectacles || 0, "spectacles") +
-          statBox(tournois.length, "tournois") +
+          statBox(stages.length, "stages") +
           statBox(paysJoues.length, "pays") +
           statBox(troupesLiees.length, "troupes") +
         "</div>" +
@@ -690,9 +697,9 @@
           }).join("")
         ) : "") +
 
-        (tournois.length ? (
-          '<div class="section-title">🏆 Tournois / festivals</div>' +
-          tournois.map(function (t) {
+        (stages.length ? (
+          '<div class="section-title">📚 Stages</div>' +
+          stages.map(function (t) {
             return '<div class="list-item"><div class="li-main"><div class="li-title">' + esc(t.nom) + '</div><div class="li-sub">' +
               (t.annee ? t.annee + " · " : "") + esc(t.ville || "") + (t.pays ? " " + esc(t.pays) : "") + "</div></div></div>";
           }).join("")
@@ -757,6 +764,7 @@
     var equipes = await fetchRelated("equipes_rencontrees", "troupe", id);
     var photos = await fetchRelated("photos", "troupe", id);
     var videos = await fetchRelated("videos", "troupe", id);
+    var allProfiles = isOwner ? await fetchAllProfiles() : [];
 
     return (
       '<button class="back-btn" data-nav="#/troupes">&larr; Retour aux troupes</button>' +
@@ -771,10 +779,9 @@
         "</div>" +
 
         '<div class="stat-row">' +
-          statBox(t.nb_matchs || 0, "matchs") +
           statBox(t.nb_spectacles || 0, "spectacles") +
           statBox(membres.length, "membres") +
-          statBox(tournois.length, "tournois") +
+          statBox(tournois.length, "stages") +
         "</div>" +
 
         (t.description ? "<p>" + esc(t.description).replace(/\n/g, "<br>") + "</p>" : "") +
@@ -803,7 +810,7 @@
         ) : '<p class="empty-hint">Aucun membre renseigné.</p>') +
 
         (tournois.length ? (
-          '<div class="section-title">🏆 Tournois / festivals</div>' +
+          '<div class="section-title">📚 Stages</div>' +
           tournois.map(function (tr) {
             return '<div class="list-item"><div class="li-main"><div class="li-title">' + esc(tr.nom) + '</div><div class="li-sub">' +
               (tr.annee ? tr.annee + " · " : "") + esc(tr.ville || "") + (tr.pays ? " " + esc(tr.pays) : "") + "</div></div></div>";
@@ -831,26 +838,30 @@
 
         (isOwner ? (
           '<div class="section-title">Gérer la troupe</div>' +
-          troupeManageHtml(t, membres, tournois, equipes, photos, videos)
+          troupeManageHtml(t, membres, tournois, equipes, photos, videos, allProfiles)
         ) : "") +
       "</div>"
     );
   }
-  function troupeManageHtml(t, membres, tournois, equipes, photos, videos) {
+  function troupeManageHtml(t, membres, tournois, equipes, photos, videos, allProfiles) {
+    var pseudoOptions = (allProfiles || []).map(function (p) {
+      return '<option value="' + esc(p.pseudo) + '">' + esc(p.nom_complet || p.pseudo) + "</option>";
+    }).join("");
     return (
-      '<p class="hint">Ajouter un membre par son pseudo (il doit déjà avoir un passeport) :</p>' +
+      '<p class="hint">Ajouter un membre par son pseudo (il doit déjà avoir un passeport) — commence à taper pour voir des suggestions :</p>' +
       '<form class="add-form" data-kind="membre" data-troupe="' + esc(t.id) + '">' +
         '<div class="form-row">' +
-          '<input type="text" name="pseudo" placeholder="Pseudo de la personne" required>' +
+          '<input type="text" name="pseudo" list="pseudo-datalist" placeholder="Pseudo de la personne" required autocomplete="off">' +
           '<input type="number" name="annee_debut" placeholder="Année d’arrivée" min="1970" max="' + currentYear() + '">' +
           '<button type="submit" class="btn btn-sm">Ajouter</button>' +
         "</div>" +
       "</form>" +
+      '<datalist id="pseudo-datalist">' + pseudoOptions + "</datalist>" +
 
-      '<p class="hint" style="margin-top:16px;">Ajouter un tournoi / festival :</p>' +
+      '<p class="hint" style="margin-top:16px;">Ajouter un stage :</p>' +
       '<form class="add-form" data-kind="tournoi" data-owner-type="troupe" data-owner-id="' + esc(t.id) + '">' +
         '<div class="form-row">' +
-          '<input type="text" name="nom" placeholder="Nom du tournoi" required>' +
+          '<input type="text" name="nom" placeholder="Nom du stage" required>' +
           '<input type="number" name="annee" placeholder="Année" min="1970" max="' + currentYear() + '">' +
           '<input type="text" name="ville" placeholder="Ville">' +
           '<input type="text" name="pays" placeholder="Pays">' +
@@ -911,10 +922,7 @@
             '<div><label>Facebook</label><input type="url" name="facebook" value="' + v("facebook") + '"></div>' +
             '<div><label>Email de contact</label><input type="email" name="email_contact" value="' + v("email_contact") + '"></div>' +
           "</div>" +
-          '<div class="form-grid">' +
-            '<div><label>Nombre de matchs joués</label><input type="number" name="nb_matchs" min="0" value="' + v("nb_matchs") + '"></div>' +
-            '<div><label>Nombre de spectacles joués</label><input type="number" name="nb_spectacles" min="0" value="' + v("nb_spectacles") + '"></div>' +
-          "</div>" +
+          '<label>Nombre de spectacles joués</label><input type="number" name="nb_spectacles" min="0" value="' + v("nb_spectacles") + '" style="max-width:140px;">' +
           '<label>Logo</label><input type="file" id="troupe-logo-input" accept="image/*">' +
           '<button type="submit" class="btn" style="margin-top:18px;">Enregistrer</button>' +
         "</form>" +
@@ -972,7 +980,10 @@
         "<h2>" + (isNew ? "Créer mon passeport" : "Mon passeport") + "</h2>" +
         (isNew ? '<p class="hint">Choisis un pseudo unique — c’est ce qui formera le lien de ta fiche.</p>' : "") +
         '<form id="profile-form">' +
-          '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:6px;">' +
+          (p.banner_url ? '<img src="' + esc(p.banner_url) + '" class="profile-banner-img" alt="" style="margin-bottom:14px;">' : "") +
+          '<label style="margin-top:0;">Bannière (une photo de toi en train d’improviser, affichée en haut de ta fiche)</label>' +
+          '<input type="file" id="banner-input" accept="image/*">' +
+          '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:16px 0 6px;">' +
             avatarHtml(p.avatar_url, p.pseudo, "avatar-md") +
             '<label style="margin:0;flex:1 1 200px;"><span style="display:block;color:var(--gold);font-weight:600;font-size:0.82rem;margin-bottom:5px;">Photo de profil</span><input type="file" id="avatar-input" accept="image/*"></label>' +
           "</div>" +
@@ -986,14 +997,11 @@
           "</div>" +
           '<div class="form-grid">' +
             '<div><label>Année de début d’impro</label><input type="number" name="annee_debut_impro" min="1950" max="' + currentYear() + '" value="' + v("annee_debut_impro") + '"></div>' +
-            '<div><label>Mentor (le prof qui t’a donné le goût)</label><input type="text" name="mentor" value="' + v("mentor") + '"></div>' +
+            '<div><label>MENTOR (celui qui t’a fait découvrir l’impro)</label><input type="text" name="mentor" value="' + v("mentor") + '"></div>' +
           "</div>" +
           '<label>Disciplines pratiquées</label><div>' + disciplinesHtml + "</div>" +
           '<label>Rôles joués</label><div>' + rolesHtml + "</div>" +
-          '<div class="form-grid">' +
-            '<div><label>Nombre de matchs joués</label><input type="number" name="nb_matchs" min="0" value="' + v("nb_matchs") + '"></div>' +
-            '<div><label>Nombre de spectacles joués</label><input type="number" name="nb_spectacles" min="0" value="' + v("nb_spectacles") + '"></div>' +
-          "</div>" +
+          '<label>Nombre de spectacles joués</label><input type="number" name="nb_spectacles" min="0" value="' + v("nb_spectacles") + '" style="max-width:140px;">' +
           '<label>Bio</label><textarea name="bio" rows="3" maxlength="600">' + v("bio") + "</textarea>" +
           '<button type="submit" class="btn" style="margin-top:18px;">Enregistrer</button>' +
           (!isNew ? ' <button type="button" id="view-my-profile" class="btn-ghost">Voir ma fiche publique</button>' : "") +
@@ -1005,7 +1013,7 @@
     if (isNew) return basicForm;
 
     var troupesLiees = await fetchTroupesDuProfil(p.id);
-    var tournois = await fetchRelated("tournois", "profile", p.id);
+    var stages = await fetchRelated("tournois", "profile", p.id);
     var equipes = await fetchRelated("equipes_rencontrees", "profile", p.id);
     var photos = await fetchRelated("photos", "profile", p.id);
     var videos = await fetchRelated("videos", "profile", p.id);
@@ -1032,15 +1040,15 @@
           "</form>"
         ) : '<p class="empty-hint">Aucune troupe créée pour l’instant — <button class="btn-link" data-nav="#/troupe/nouvelle">en créer une</button>.</p>') +
 
-        '<div class="section-title">🏆 Tournois / festivals</div>' +
-        tournois.map(function (t) {
+        '<div class="section-title">📚 Stages</div>' +
+        stages.map(function (t) {
           return '<div class="list-item"><div class="li-main"><div class="li-title">' + esc(t.nom) + '</div><div class="li-sub">' +
             (t.annee ? t.annee + " · " : "") + esc(t.ville || "") + (t.pays ? " " + esc(t.pays) : "") + '</div></div>' +
             '<button class="remove-x" data-remove="tournois" data-id="' + esc(t.id) + '">&times;</button></div>';
         }).join("") +
         '<form class="add-form" data-kind="tournoi" data-owner-type="profile" data-owner-id="' + esc(p.id) + '">' +
           '<div class="form-row">' +
-            '<input type="text" name="nom" placeholder="Nom du tournoi" required>' +
+            '<input type="text" name="nom" placeholder="Nom du stage" required>' +
             '<input type="number" name="annee" placeholder="Année" min="1970" max="' + currentYear() + '">' +
             '<input type="text" name="ville" placeholder="Ville">' +
             '<input type="text" name="pays" placeholder="Pays">' +
@@ -1210,7 +1218,6 @@
         mentor: f.mentor.value.trim(),
         disciplines: Array.prototype.slice.call(f.querySelectorAll('[name="disciplines"]:checked')).map(function (i) { return i.value; }),
         roles: Array.prototype.slice.call(f.querySelectorAll('[name="roles"]:checked')).map(function (i) { return i.value; }),
-        nb_matchs: f.nb_matchs.value ? parseInt(f.nb_matchs.value, 10) : 0,
         nb_spectacles: f.nb_spectacles.value ? parseInt(f.nb_spectacles.value, 10) : 0,
         bio: f.bio.value.trim()
       };
@@ -1221,6 +1228,12 @@
         var up = await uploadAvatar(avatarFile);
         if (up.error) { busy = false; errEl2.textContent = "Photo : " + up.error; return; }
         fields.avatar_url = up.url;
+      }
+      var bannerFile = $("banner-input") && $("banner-input").files[0];
+      if (bannerFile) {
+        var upB = await uploadBanner(bannerFile);
+        if (upB.error) { busy = false; errEl2.textContent = "Bannière : " + upB.error; return; }
+        fields.banner_url = upB.url;
       }
       if (!fields.ville && !fields.pays) {
         // pas de géocodage possible
@@ -1255,7 +1268,6 @@
         instagram: tf.instagram.value.trim(),
         facebook: tf.facebook.value.trim(),
         email_contact: tf.email_contact.value.trim(),
-        nb_matchs: tf.nb_matchs.value ? parseInt(tf.nb_matchs.value, 10) : 0,
         nb_spectacles: tf.nb_spectacles.value ? parseInt(tf.nb_spectacles.value, 10) : 0
       };
       busy = true;
@@ -1268,15 +1280,17 @@
       var result;
       if (existingId) {
         if (logoFile) {
-          var up2 = await uploadPhoto("troupe-logo", existingId, logoFile);
-          if (!up2.error) tfields.logo_url = up2.url;
+          var up2 = await uploadPhoto("troupe", existingId, logoFile);
+          if (up2.error) { busy = false; errEl3.textContent = "Logo : " + up2.error; return; }
+          tfields.logo_url = up2.url;
         }
         result = await updateTroupe(existingId, tfields);
       } else {
         result = await createTroupe(tfields);
         if (result.ok && logoFile) {
-          var up3 = await uploadPhoto("troupe-logo", result.troupe.id, logoFile);
-          if (!up3.error) await updateTroupe(result.troupe.id, { logo_url: up3.url });
+          var up3 = await uploadPhoto("troupe", result.troupe.id, logoFile);
+          if (up3.error) { busy = false; errEl3.textContent = "Troupe créée, mais le logo n’a pas pu être envoyé : " + up3.error; return; }
+          await updateTroupe(result.troupe.id, { logo_url: up3.url });
         }
       }
       busy = false;
