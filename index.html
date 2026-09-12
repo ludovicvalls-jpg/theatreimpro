@@ -388,9 +388,9 @@
     if (res.error) return { error: res.error.message };
     return { ok: true };
   }
-  /* ================= Géocodage (ville/pays -> coordonnées, pour la carte) ================= */
-  async function geocode(ville, pays) {
-    var q = [ville, pays].filter(Boolean).join(", ");
+  /* ================= Géocodage (adresse/ville/pays -> coordonnées, pour la carte) ================= */
+  async function geocode(ville, pays, adresse) {
+    var q = [adresse, ville, pays].filter(Boolean).join(", ");
     if (!q) return null;
     try {
       var url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(q);
@@ -908,6 +908,7 @@
         "<h2>" + (id ? "Modifier la troupe" : "Créer une troupe") + "</h2>" +
         '<form id="troupe-form" data-id="' + esc(id || "") + '">' +
           '<label>Nom de la troupe</label><input type="text" name="nom" required value="' + v("nom") + '">' +
+          '<label>Adresse (numéro, rue) <span class="hint">— optionnel, pour une position plus précise sur la carte</span></label><input type="text" name="adresse" value="' + v("adresse") + '">' +
           '<div class="form-grid">' +
             '<div><label>Ville</label><input type="text" name="ville" value="' + v("ville") + '"></div>' +
             '<div><label>Pays</label><input type="text" name="pays" value="' + v("pays") + '"></div>' +
@@ -1258,6 +1259,7 @@
       errEl3.textContent = "";
       var tfields = {
         nom: tf.nom.value.trim(),
+        adresse: tf.adresse.value.trim(),
         ville: tf.ville.value.trim(),
         pays: tf.pays.value.trim(),
         fondee_en: tf.fondee_en.value ? parseInt(tf.fondee_en.value, 10) : null,
@@ -1273,8 +1275,8 @@
       busy = true;
       var logoFile = $("troupe-logo-input") && $("troupe-logo-input").files[0];
       var existingId = tf.getAttribute("data-id");
-      if (tfields.ville || tfields.pays) {
-        var geo2 = await geocode(tfields.ville, tfields.pays);
+      if (tfields.ville || tfields.pays || tfields.adresse) {
+        var geo2 = await geocode(tfields.ville, tfields.pays, tfields.adresse);
         if (geo2) { tfields.latitude = geo2.latitude; tfields.longitude = geo2.longitude; }
       }
       var result;
