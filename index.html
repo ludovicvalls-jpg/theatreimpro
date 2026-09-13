@@ -121,7 +121,7 @@
   .hero p { color: var(--text-dim); max-width: 520px; margin: 10px auto 26px; }
   .hero-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
-  .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 190px)); gap: 12px; justify-content: center; max-width: 680px; margin: 0 auto; }
   .home-tile {
     background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
     padding: 22px 14px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -281,6 +281,8 @@
   var myProfile = null;
   var view = { screen: "home" };
   var lightboxUrl = null;
+  var _playersAll = [];
+  var _troupesAll = [];
   var busy = false;
 
   /* ================= Petits utilitaires ================= */
@@ -424,6 +426,21 @@
     if (res.error) return { error: res.error.message };
     return { ok: true, troupe: res.data };
   }
+  async function deleteTroupe(id) {
+    // On retire d'abord tout ce qui est rattaché à la troupe (membres, stages, spectacles,
+    // photos, vidéos), et on détache (sans les supprimer) les "équipes rencontrées" d'autres
+    // fiches qui pointaient vers cette troupe, avant de supprimer la troupe elle-même.
+    await supa.from("troupe_membres").delete().eq("troupe_id", id);
+    await supa.from("spectacles").delete().eq("troupe_id", id);
+    await supa.from("tournois").delete().eq("owner_type", "troupe").eq("owner_id", id);
+    await supa.from("equipes_rencontrees").delete().eq("owner_type", "troupe").eq("owner_id", id);
+    await supa.from("equipes_rencontrees").update({ troupe_id: null }).eq("troupe_id", id);
+    await supa.from("photos").delete().eq("owner_type", "troupe").eq("owner_id", id);
+    await supa.from("videos").delete().eq("owner_type", "troupe").eq("owner_id", id);
+    var res = await supa.from("troupes").delete().eq("id", id);
+    if (res.error) return { error: res.error.message };
+    return { ok: true };
+  }
 
   /* ================= Données génériques liées (membres/tournois/équipes/photos/vidéos) ================= */
   async function fetchRelated(table, ownerType, ownerId) {
@@ -455,8 +472,7 @@
     return { ok: true };
   }
   /* ================= Géocodage (adresse/ville/pays -> coordonnées, pour la carte) ================= */
-  async function geocode(ville, pays, adresse) {
-    var q = [adresse, ville, pays].filter(Boolean).join(", ");
+  async function geocodeQuery(q) {
     if (!q) return null;
     try {
       var url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(q);
@@ -465,6 +481,15 @@
       if (data && data[0]) return { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) };
     } catch (e) { console.warn("Géocodage impossible", e); }
     return null;
+  }
+  // Essaie d'abord l'adresse précise (si renseignée) ; si elle ne donne rien (ou n'est pas
+  // renseignée), se rabat automatiquement sur la ville/le pays pour quand même placer la troupe.
+  async function geocode(ville, pays, adresse) {
+    if (adresse) {
+      var viaAdresse = await geocodeQuery([adresse, ville, pays].filter(Boolean).join(", "));
+      if (viaAdresse) return viaAdresse;
+    }
+    return await geocodeQuery([ville, pays].filter(Boolean).join(", "));
   }
 
   /* ================= Upload de fichiers (avatars / photos) ================= */
@@ -670,27 +695,21 @@
   /* ================= Annuaire des improvisateurs ================= */
   async function renderPlayers() {
     var profiles = await fetchAllProfiles();
-    var filter = (view.q || "").toLowerCase();
-    var filtered = filter
-      ? profiles.filter(function (p) {
-          return (p.pseudo || "").toLowerCase().indexOf(filter) !== -1 ||
-                 (p.nom_complet || "").toLowerCase().indexOf(filter) !== -1 ||
-                 (p.ville || "").toLowerCase().indexOf(filter) !== -1;
-        })
-      : profiles;
-    var rows = filtered.map(function (p) {
-      return (
-        '<button class="directory-row" data-nav="#/profil/' + esc(p.pseudo) + '">' +
-          avatarHtml(p.avatar_url, p.pseudo, "avatar-md") +
-          '<span><span class="dr-name">' + esc(p.nom_complet || p.pseudo) + '</span><br>' +
-          '<span class="dr-sub">@' + esc(p.pseudo) + (p.ville ? " · " + esc(p.ville) : "") + (p.pays ? " " + esc(p.pays) : "") + "</span></span>" +
-        "</button>"
-      );
-    }).join("");
+    _playersAll = profiles;
+    var rows = profiles.map(playerRowHtml).join("");
     return (
       "<h2>🎭 Les improvisateurs</h2>" +
-      '<input type="search" id="players-search" placeholder="Chercher un pseudo, un nom, une ville…" value="' + esc(view.q || "") + '" style="width:100%;margin:12px 0 18px;">' +
-      '<div class="directory-list">' + (rows || '<p class="empty-hint">Aucun profil pour l’instant.</p>') + "</div>"
+      '<input type="search" id="players-search" placeholder="Chercher un pseudo, un nom, une ville…" style="width:100%;margin:12px 0 18px;" autocomplete="off">' +
+      '<div class="directory-list" id="players-list">' + (rows || '<p class="empty-hint">Aucun profil pour l’instant.</p>') + "</div>"
+    );
+  }
+  function playerRowHtml(p) {
+    return (
+      '<button class="directory-row" data-nav="#/profil/' + esc(p.pseudo) + '">' +
+        avatarHtml(p.avatar_url, p.pseudo, "avatar-md") +
+        '<span><span class="dr-name">' + esc(p.nom_complet || p.pseudo) + '</span><br>' +
+        '<span class="dr-sub">@' + esc(p.pseudo) + (p.ville ? " · " + esc(p.ville) : "") + (p.pays ? " " + esc(p.pays) : "") + "</span></span>" +
+      "</button>"
     );
   }
 
@@ -815,19 +834,22 @@
   /* ================= Annuaire des troupes ================= */
   async function renderTroupes() {
     var troupes = await fetchAllTroupes();
-    var rows = troupes.map(function (t) {
-      return (
-        '<button class="directory-row" data-nav="#/troupe/' + esc(t.id) + '">' +
-          avatarHtml(t.logo_url, t.nom, "avatar-md") +
-          '<span><span class="dr-name">' + esc(t.nom) + '</span><br>' +
-          '<span class="dr-sub">' + esc(t.ville || "") + (t.pays ? " " + esc(t.pays) : "") + (t.fondee_en ? " · fondée en " + t.fondee_en : "") + "</span></span>" +
-        "</button>"
-      );
-    }).join("");
+    _troupesAll = troupes;
+    var rows = troupes.map(troupeRowHtml).join("");
     return (
       "<h2>👥 Les troupes</h2>" +
-      (session ? '<button class="btn" data-nav="#/troupe/nouvelle" style="margin:12px 0 18px;">+ Créer une troupe</button>' : '<p class="hint" style="margin:12px 0;">Connecte-toi pour créer une troupe.</p>') +
-      '<div class="directory-list">' + (rows || '<p class="empty-hint">Aucune troupe pour l’instant.</p>') + "</div>"
+      (session ? '<button class="btn" data-nav="#/troupe/nouvelle" style="margin:12px 0 6px;">+ Créer une troupe</button>' : '<p class="hint" style="margin:12px 0;">Connecte-toi pour créer une troupe.</p>') +
+      '<input type="search" id="troupes-search" placeholder="Chercher une troupe, une ville, un pays…" style="width:100%;margin:6px 0 18px;" autocomplete="off">' +
+      '<div class="directory-list" id="troupes-list">' + (rows || '<p class="empty-hint">Aucune troupe pour l’instant.</p>') + "</div>"
+    );
+  }
+  function troupeRowHtml(t) {
+    return (
+      '<button class="directory-row" data-nav="#/troupe/' + esc(t.id) + '">' +
+        avatarHtml(t.logo_url, t.nom, "avatar-md") +
+        '<span><span class="dr-name">' + esc(t.nom) + '</span><br>' +
+        '<span class="dr-sub">' + esc(t.ville || "") + (t.pays ? " " + esc(t.pays) : "") + (t.fondee_en ? " · fondée en " + t.fondee_en : "") + "</span></span>" +
+      "</button>"
     );
   }
 
@@ -981,8 +1003,8 @@
               '<div class="suggest-wrap"><input type="text" name="pseudo" class="js-suggest" data-suggest-source="' + jsonAttr(pseudoOptions) + '" placeholder="Pseudo de la personne" required autocomplete="off"><div class="suggest-list" hidden></div></div>' +
             "</div>" +
             '<div class="form-row" style="margin-top:8px;">' +
-              '<div><label style="margin:0 0 3px;">Date d’arrivée</label><input type="date" name="date_debut"></div>' +
-              '<div><label style="margin:0 0 3px;">Date de départ <span class="field-hint" style="display:inline;">— vide = toujours dans la troupe</span></label><input type="date" name="date_fin"></div>' +
+              '<div><label style="margin:0 0 3px;">Date d’arrivée</label><input type="date" name="date_debut" autocomplete="off"></div>' +
+              '<div><label style="margin:0 0 3px;">Date de départ <span class="field-hint" style="display:inline;">— vide = toujours dans la troupe</span></label><input type="date" name="date_fin" autocomplete="off"></div>' +
             "</div>" +
             '<button type="submit" class="btn btn-sm" style="margin-top:10px;">Ajouter</button>' +
           "</form>"
@@ -1044,8 +1066,8 @@
         form: (
           '<form class="add-form" data-kind="video" data-owner-type="troupe" data-owner-id="' + esc(t.id) + '">' +
             '<div class="form-row">' +
-              '<input type="url" name="url" placeholder="https://…" required>' +
-              '<input type="text" name="caption" placeholder="Titre (optionnel)">' +
+              '<input type="url" name="url" placeholder="https://…" required autocomplete="off">' +
+              '<input type="text" name="caption" placeholder="Titre (optionnel)" autocomplete="off">' +
               '<button type="submit" class="btn btn-sm">Ajouter</button>' +
             "</div>" +
           "</form>"
@@ -1064,12 +1086,12 @@
         }).join("") : '<p class="empty-hint">Aucun spectacle annoncé pour l’instant.</p>',
         form: (
           '<form class="add-form" data-kind="spectacle" data-troupe="' + esc(t.id) + '">' +
-            '<label style="margin-top:0;">Titre du spectacle</label><input type="text" name="titre" placeholder="Titre du spectacle" required>' +
+            '<label style="margin-top:0;">Titre du spectacle</label><input type="text" name="titre" placeholder="Titre du spectacle" required autocomplete="off">' +
             '<div class="form-grid">' +
-              '<div><label>Date</label><input type="date" name="date_spectacle" required></div>' +
-              '<div><label>Lieu</label><input type="text" name="lieu" placeholder="Lieu"></div>' +
+              '<div><label>Date</label><input type="date" name="date_spectacle" required autocomplete="off"></div>' +
+              '<div><label>Lieu</label><input type="text" name="lieu" placeholder="Lieu" autocomplete="off"></div>' +
             "</div>" +
-            '<label>Prix</label><input type="text" name="prix" placeholder="Ex : 10€, gratuit…" style="max-width:220px;">' +
+            '<label>Prix</label><input type="text" name="prix" placeholder="Ex : 10€, gratuit…" style="max-width:220px;" autocomplete="off">' +
             '<label>Descriptif</label><textarea name="descriptif" rows="3" placeholder="Présentation du spectacle"></textarea>' +
             '<label>Affiche<span class="field-hint">Format image, 1 Mo maximum</span></label><input type="file" name="affiche" accept="image/*">' +
             '<button type="submit" class="btn btn-sm" style="margin-top:10px;">Annoncer ce spectacle</button>' +
@@ -1102,6 +1124,16 @@
         '<div class="manage-panel">' +
           '<div class="section-title" style="margin-top:0;">🛠️ Gérer la troupe</div>' +
           troupeManageHtml(t, membres, tournois, equipes, photos, videos, spectacles, allProfiles, toutesTroupesPourEquipes) +
+        "</div>" +
+        '<div class="card" style="margin-top:18px;border-color:var(--red);">' +
+          '<div class="section-title" style="margin-top:0;color:var(--red);">⚠️ Zone de danger</div>' +
+          '<p class="hint">Supprimer une troupe efface aussi tous ses membres, stages, équipes rencontrées, spectacles, photos et vidéos. Cette action est définitive et ne peut pas être annulée.</p>' +
+          '<button type="button" class="btn-red" data-toggle="toggle-delete-troupe">🗑️ Supprimer la troupe</button>' +
+          '<div id="toggle-delete-troupe" class="manage-form-wrap" hidden>' +
+            '<p class="error-msg">Es-tu bien sûr·e de vouloir supprimer définitivement « ' + esc(t.nom || "") + ' » ? Toutes ses données seront perdues.</p>' +
+            '<button type="button" class="btn-ghost btn-sm" data-toggle="toggle-delete-troupe">Annuler</button> ' +
+            '<button type="button" class="btn-red" id="confirm-delete-troupe" data-id="' + esc(id) + '">Oui, supprimer définitivement</button>' +
+          "</div>" +
         "</div>"
       );
     }
@@ -1110,21 +1142,21 @@
       '<div class="card">' +
         "<h2>" + (id ? "Modifier la troupe" : "Créer une troupe") + "</h2>" +
         '<form id="troupe-form" data-id="' + esc(id || "") + '">' +
-          '<label>Nom de la troupe</label><input type="text" name="nom" required value="' + v("nom") + '">' +
-          '<label>Adresse (numéro, rue) <span class="hint">— optionnel, pour une position plus précise sur la carte</span></label><input type="text" name="adresse" value="' + v("adresse") + '">' +
+          '<label>Nom de la troupe</label><input type="text" name="nom" required value="' + v("nom") + '" autocomplete="off">' +
+          '<label>Adresse (numéro, rue) <span class="hint">— optionnel, pour une position plus précise sur la carte</span></label><input type="text" name="adresse" value="' + v("adresse") + '" autocomplete="off">' +
           '<div class="form-grid">' +
-            '<div><label>Ville</label><input type="text" name="ville" value="' + v("ville") + '"></div>' +
-            '<div><label>Pays</label><input type="text" name="pays" value="' + v("pays") + '"></div>' +
+            '<div><label>Ville</label><input type="text" name="ville" value="' + v("ville") + '" autocomplete="off"></div>' +
+            '<div><label>Pays</label><input type="text" name="pays" value="' + v("pays") + '" autocomplete="off"></div>' +
           "</div>" +
-          '<label>Fondée en</label><input type="number" name="fondee_en" min="1950" max="' + currentYear() + '" value="' + v("fondee_en") + '" style="max-width:140px;">' +
+          '<label>Fondée en</label><input type="number" name="fondee_en" min="1950" max="' + currentYear() + '" value="' + v("fondee_en") + '" style="max-width:140px;" autocomplete="off">' +
           '<label>Description / historique</label><textarea name="description" rows="3">' + v("description") + "</textarea>" +
-          '<label>Style d’impro</label><input type="text" name="style_impro" value="' + v("style_impro") + '">' +
-          '<label>Lieu de résidence / répétition</label><input type="text" name="lieu_residence" value="' + v("lieu_residence") + '">' +
+          '<label>Style d’impro</label><input type="text" name="style_impro" value="' + v("style_impro") + '" autocomplete="off">' +
+          '<label>Lieu de résidence / répétition</label><input type="text" name="lieu_residence" value="' + v("lieu_residence") + '" autocomplete="off">' +
           '<div class="form-grid">' +
-            '<div><label>Site web</label><input type="url" name="site_web" value="' + v("site_web") + '"></div>' +
-            '<div><label>Instagram</label><input type="url" name="instagram" value="' + v("instagram") + '"></div>' +
-            '<div><label>Facebook</label><input type="url" name="facebook" value="' + v("facebook") + '"></div>' +
-            '<div><label>Email de contact</label><input type="email" name="email_contact" value="' + v("email_contact") + '"></div>' +
+            '<div><label>Site web</label><input type="url" name="site_web" value="' + v("site_web") + '" autocomplete="off"></div>' +
+            '<div><label>Instagram</label><input type="url" name="instagram" value="' + v("instagram") + '" autocomplete="off"></div>' +
+            '<div><label>Facebook</label><input type="url" name="facebook" value="' + v("facebook") + '" autocomplete="off"></div>' +
+            '<div><label>Email de contact</label><input type="email" name="email_contact" value="' + v("email_contact") + '" autocomplete="off"></div>' +
           "</div>" +
           '<label>Logo<span class="field-hint">Format image, 1 Mo maximum</span></label><input type="file" id="troupe-logo-input" accept="image/*">' +
           '<button type="submit" class="btn" style="margin-top:18px;">Enregistrer</button>' +
@@ -1200,20 +1232,20 @@
             '<label style="margin:0;flex:1 1 200px;"><span style="display:block;color:var(--gold);font-weight:600;font-size:0.82rem;margin-bottom:5px;">Photo de profil<span class="field-hint" style="display:inline;color:var(--text-dim);font-weight:400;">— 1 Mo maximum</span></span><input type="file" id="avatar-input" accept="image/*"></label>' +
           "</div>" +
           '<div class="form-grid">' +
-            '<div><label>Pseudo *</label><input type="text" name="pseudo" required pattern="[a-zA-Z0-9_\\-\\.]{3,30}" value="' + v("pseudo") + '" ' + (isNew ? "" : "readonly") + "></div>" +
-            '<div><label>Nom complet</label><input type="text" name="nom_complet" value="' + v("nom_complet") + '"></div>' +
+            '<div><label>Pseudo *</label><input type="text" name="pseudo" required pattern="[a-zA-Z0-9_\\-\\.]{3,30}" autocomplete="off" value="' + v("pseudo") + '" ' + (isNew ? "" : "readonly") + "></div>" +
+            '<div><label>Nom complet</label><input type="text" name="nom_complet" value="' + v("nom_complet") + '" autocomplete="off"></div>' +
           "</div>" +
           '<div class="form-grid">' +
-            '<div><label>Ville</label><input type="text" name="ville" value="' + v("ville") + '"></div>' +
-            '<div><label>Pays</label><input type="text" name="pays" value="' + v("pays") + '"></div>' +
+            '<div><label>Ville</label><input type="text" name="ville" value="' + v("ville") + '" autocomplete="off"></div>' +
+            '<div><label>Pays</label><input type="text" name="pays" value="' + v("pays") + '" autocomplete="off"></div>' +
           "</div>" +
           '<div class="form-grid">' +
-            '<div><label>Année de début d’impro</label><input type="number" name="annee_debut_impro" min="1950" max="' + currentYear() + '" value="' + v("annee_debut_impro") + '"></div>' +
-            '<div><label>MENTOR (celui qui t’a fait découvrir l’impro)</label><input type="text" name="mentor" value="' + v("mentor") + '"></div>' +
+            '<div><label>Année de début d’impro</label><input type="number" name="annee_debut_impro" min="1950" max="' + currentYear() + '" value="' + v("annee_debut_impro") + '" autocomplete="off"></div>' +
+            '<div><label>MENTOR (celui qui t’a fait découvrir l’impro)</label><input type="text" name="mentor" value="' + v("mentor") + '" autocomplete="off"></div>' +
           "</div>" +
           '<label>Disciplines pratiquées</label><div>' + disciplinesHtml + "</div>" +
           '<label>Rôles joués</label><div>' + rolesHtml + "</div>" +
-          '<label>Nombre de spectacles joués</label><input type="number" name="nb_spectacles" min="0" value="' + v("nb_spectacles") + '" style="max-width:140px;">' +
+          '<label>Nombre de spectacles joués</label><input type="number" name="nb_spectacles" min="0" value="' + v("nb_spectacles") + '" style="max-width:140px;" autocomplete="off">' +
           '<label>Bio</label><textarea name="bio" rows="3" maxlength="600">' + v("bio") + "</textarea>" +
           '<button type="submit" class="btn" style="margin-top:18px;">Enregistrer</button>' +
           (!isNew ? ' <button type="button" id="view-my-profile" class="btn-ghost">Voir ma fiche publique</button>' : "") +
@@ -1247,8 +1279,8 @@
               '<select name="troupe_id" required><option value="">Choisir une troupe…</option>' + troupeOptions + "</select>" +
             "</div>" +
             '<div class="form-row" style="margin-top:8px;">' +
-              '<div><label style="margin:0 0 3px;">Date d’arrivée</label><input type="date" name="date_debut"></div>' +
-              '<div><label style="margin:0 0 3px;">Date de départ <span class="field-hint" style="display:inline;">— vide = actuel</span></label><input type="date" name="date_fin"></div>' +
+              '<div><label style="margin:0 0 3px;">Date d’arrivée</label><input type="date" name="date_debut" autocomplete="off"></div>' +
+              '<div><label style="margin:0 0 3px;">Date de départ <span class="field-hint" style="display:inline;">— vide = actuel</span></label><input type="date" name="date_fin" autocomplete="off"></div>' +
               '<button type="submit" class="btn btn-sm" style="align-self:flex-end;">Ajouter</button>' +
             "</div>" +
           "</form>"
@@ -1262,10 +1294,10 @@
         }).join("") +
         '<form class="add-form" data-kind="tournoi" data-owner-type="profile" data-owner-id="' + esc(p.id) + '">' +
           '<div class="form-row">' +
-            '<input type="text" name="nom" placeholder="Nom du stage" required>' +
-            '<input type="number" name="annee" placeholder="Année" min="1970" max="' + currentYear() + '">' +
-            '<input type="text" name="ville" placeholder="Ville">' +
-            '<input type="text" name="pays" placeholder="Pays">' +
+            '<input type="text" name="nom" placeholder="Nom du stage" required autocomplete="off">' +
+            '<input type="number" name="annee" placeholder="Année" min="1970" max="' + currentYear() + '" autocomplete="off">' +
+            '<input type="text" name="ville" placeholder="Ville" autocomplete="off">' +
+            '<input type="text" name="pays" placeholder="Pays" autocomplete="off">' +
             '<button type="submit" class="btn btn-sm">Ajouter</button>' +
           "</div>" +
         "</form>" +
@@ -1292,8 +1324,8 @@
         }).join("") +
         '<form class="add-form" data-kind="lien">' +
           '<div class="form-row">' +
-            '<input type="text" name="label" placeholder="Nom (ex: Instagram)">' +
-            '<input type="url" name="url" placeholder="https://…" required>' +
+            '<input type="text" name="label" placeholder="Nom (ex: Instagram)" autocomplete="off">' +
+            '<input type="url" name="url" placeholder="https://…" required autocomplete="off">' +
             '<button type="submit" class="btn btn-sm">Ajouter</button>' +
           "</div>" +
         "</form>" +
@@ -1315,8 +1347,8 @@
         }).join("") +
         '<form class="add-form" data-kind="video" data-owner-type="profile" data-owner-id="' + esc(p.id) + '">' +
           '<div class="form-row">' +
-            '<input type="url" name="url" placeholder="https://…" required>' +
-            '<input type="text" name="caption" placeholder="Titre (optionnel)">' +
+            '<input type="url" name="url" placeholder="https://…" required autocomplete="off">' +
+            '<input type="text" name="caption" placeholder="Titre (optionnel)" autocomplete="off">' +
             '<button type="submit" class="btn btn-sm">Ajouter</button>' +
           "</div>" +
         "</form>" +
@@ -1407,6 +1439,17 @@
       render();
       return;
     }
+    var confirmDeleteTroupeBtn = e.target.closest("#confirm-delete-troupe");
+    if (confirmDeleteTroupeBtn) {
+      if (busy) return;
+      busy = true;
+      var troupeIdToDelete = confirmDeleteTroupeBtn.getAttribute("data-id");
+      var delRes = await deleteTroupe(troupeIdToDelete);
+      busy = false;
+      if (delRes.error) { confirmDeleteTroupeBtn.parentElement.insertAdjacentHTML("beforeend", '<p class="error-msg">' + esc(delRes.error) + "</p>"); return; }
+      setHash("#/troupes");
+      return;
+    }
     var removeLien = e.target.closest("[data-remove-lien]");
     if (removeLien && myProfile) {
       if (busy) return;
@@ -1425,6 +1468,28 @@
 
   document.addEventListener("input", function (e) {
     var el = e.target;
+    if (el.id === "players-search") {
+      var pq = el.value.trim().toLowerCase();
+      var pFiltered = !pq ? _playersAll : _playersAll.filter(function (p) {
+        return (p.pseudo || "").toLowerCase().indexOf(pq) !== -1 ||
+               (p.nom_complet || "").toLowerCase().indexOf(pq) !== -1 ||
+               (p.ville || "").toLowerCase().indexOf(pq) !== -1;
+      });
+      var pList = $("players-list");
+      if (pList) pList.innerHTML = pFiltered.map(playerRowHtml).join("") || '<p class="empty-hint">Aucun résultat pour cette recherche.</p>';
+      return;
+    }
+    if (el.id === "troupes-search") {
+      var tq = el.value.trim().toLowerCase();
+      var tFiltered = !tq ? _troupesAll : _troupesAll.filter(function (t) {
+        return (t.nom || "").toLowerCase().indexOf(tq) !== -1 ||
+               (t.ville || "").toLowerCase().indexOf(tq) !== -1 ||
+               (t.pays || "").toLowerCase().indexOf(tq) !== -1;
+      });
+      var tList = $("troupes-list");
+      if (tList) tList.innerHTML = tFiltered.map(troupeRowHtml).join("") || '<p class="empty-hint">Aucun résultat pour cette recherche.</p>';
+      return;
+    }
     if (!el.classList || !el.classList.contains("js-suggest")) return;
     var idTargetId2 = el.getAttribute("data-suggest-id-target");
     if (idTargetId2) { var idTarget2 = $(idTargetId2); if (idTarget2) idTarget2.value = ""; }
