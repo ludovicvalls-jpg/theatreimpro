@@ -194,6 +194,9 @@
   .empty-hint { color: var(--text-dim); font-style: italic; font-size: 0.88rem; margin: 6px 0 14px; }
 
   .link-list a { display: inline-block; margin: 0 12px 6px 0; }
+  .link-list.link-icons { display: flex; gap: 16px; align-items: center; }
+  .icon-link { font-size: 1.7rem; line-height: 1; text-decoration: none; margin: 0 !important; }
+  .icon-link:hover { opacity: 0.75; }
 
   .photo-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin: 10px 0; }
   .photo-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; }
@@ -283,6 +286,7 @@
   var lightboxUrl = null;
   var _playersAll = [];
   var _troupesAll = [];
+  var lastGeocodeSummary = "";
   var busy = false;
 
   /* ================= Petits utilitaires ================= */
@@ -466,6 +470,11 @@
     if (res.error) return { error: res.error.message };
     return { ok: true, row: res.data };
   }
+  async function updateRelated(table, id, payload) {
+    var res = await supa.from(table).update(payload).eq("id", id).select().maybeSingle();
+    if (res.error) return { error: res.error.message };
+    return { ok: true, row: res.data };
+  }
   async function removeRelated(table, id) {
     var res = await supa.from(table).delete().eq("id", id);
     if (res.error) return { error: res.error.message };
@@ -490,6 +499,34 @@
       if (viaAdresse) return viaAdresse;
     }
     return await geocodeQuery([ville, pays].filter(Boolean).join(", "));
+  }
+  // Troupes qui ont une ville/un pays/une adresse mais pas encore de position sur la carte
+  // (typiquement des troupes ajoutées directement en base, sans passer par le formulaire du site,
+  // comme les imports groupés par script SQL).
+  function troupesSansPosition(troupes) {
+    return troupes.filter(function (t) {
+      return (t.latitude == null || t.longitude == null) && (t.ville || t.pays || t.adresse);
+    });
+  }
+  // Localise, une par une, toutes les troupes qui n'ont pas encore de position, en respectant
+  // le rythme maximum d'une requête par seconde imposé par Nominatim (le service de géocodage
+  // gratuit utilisé ici) — sinon il bloque temporairement les requêtes suivantes.
+  async function geocoderTroupesManquantes(onProgress) {
+    var troupes = await fetchAllTroupes();
+    var aTraiter = troupesSansPosition(troupes);
+    var total = aTraiter.length;
+    var trouvees = 0;
+    for (var i = 0; i < aTraiter.length; i++) {
+      var t = aTraiter[i];
+      var geo = await geocode(t.ville, t.pays, t.adresse);
+      if (geo) {
+        await updateTroupe(t.id, { latitude: geo.latitude, longitude: geo.longitude });
+        trouvees++;
+      }
+      if (onProgress) onProgress(i + 1, total, trouvees);
+      if (i < aTraiter.length - 1) await new Promise(function (r) { setTimeout(r, 1100); });
+    }
+    return { total: total, trouvees: trouvees };
   }
 
   /* ================= Upload de fichiers (avatars / photos) ================= */
@@ -890,11 +927,11 @@
         (t.style_impro ? '<p class="hint">🎪 Style : ' + esc(t.style_impro) + "</p>" : "") +
         (t.lieu_residence ? '<p class="hint">🏠 Répète à : ' + esc(t.lieu_residence) + "</p>" : "") +
 
-        '<div class="link-list">' +
-          (t.site_web ? '<a href="' + esc(t.site_web) + '" target="_blank" rel="noopener">🌐 Site web</a>' : "") +
-          (t.instagram ? '<a href="' + esc(t.instagram) + '" target="_blank" rel="noopener">📷 Instagram</a>' : "") +
-          (t.facebook ? '<a href="' + esc(t.facebook) + '" target="_blank" rel="noopener">📘 Facebook</a>' : "") +
-          (t.email_contact ? '<a href="mailto:' + esc(t.email_contact) + '">✉️ ' + esc(t.email_contact) + "</a>" : "") +
+        '<div class="link-list link-icons">' +
+          (t.site_web ? '<a href="' + esc(t.site_web) + '" target="_blank" rel="noopener" class="icon-link" title="Site web">🌐</a>' : "") +
+          (t.instagram ? '<a href="' + esc(t.instagram) + '" target="_blank" rel="noopener" class="icon-link" title="Instagram">📷</a>' : "") +
+          (t.facebook ? '<a href="' + esc(t.facebook) + '" target="_blank" rel="noopener" class="icon-link" title="Facebook">📘</a>' : "") +
+          (t.email_contact ? '<a href="mailto:' + esc(t.email_contact) + '" class="icon-link" title="' + esc(t.email_contact) + '">✉️</a>' : "") +
         "</div>" +
 
         (spectacles.length ? (
@@ -959,14 +996,14 @@
     return (
       '<div class="spectacle-card">' +
         (sp.affiche_url
-          ? '<img src="' + esc(sp.affiche_url) + '" class="spectacle-poster" alt="Affiche' + (sp.titre ? " " + esc(sp.titre) : "") + '">'
+          ? '<img src="' + esc(sp.affiche_url) + '" class="spectacle-poster photo-zoom-trigger" data-photo="' + esc(sp.affiche_url) + '" alt="Affiche' + (sp.titre ? " " + esc(sp.titre) : "") + '" title="Cliquer pour agrandir">'
           : '<div class="spectacle-poster spectacle-poster-empty">🎭</div>') +
         '<div class="spectacle-info">' +
           '<div class="spectacle-title">' + esc(sp.titre || "Spectacle") + "</div>" +
           '<div class="spectacle-date">' + fmtDateFr(sp.date_spectacle) + (sp.lieu ? " · " + esc(sp.lieu) : "") + "</div>" +
           '<div class="spectacle-details" hidden>' +
             (sp.descriptif ? "<p>" + esc(sp.descriptif).replace(/\n/g, "<br>") + "</p>" : "") +
-            (sp.prix ? '<p class="hint">💶 ' + esc(sp.prix) + "</p>" : "") +
+            (sp.prix ? '<p class="hint"><strong>PRIX :</strong> ' + esc(sp.prix) + "</p>" : "") +
           "</div>" +
           '<button type="button" class="btn-link spectacle-more">Voir les détails</button>' +
         "</div>" +
@@ -1082,10 +1119,12 @@
         list: spectacles.length ? spectacles.map(function (sp) {
           return '<div class="list-item"><div class="li-main"><div class="li-title">' + esc(sp.titre || "Spectacle") + '</div><div class="li-sub">' +
             fmtDateFr(sp.date_spectacle) + (sp.lieu ? " · " + esc(sp.lieu) : "") + "</div></div>" +
-            '<button class="remove-x" data-remove="spectacles" data-id="' + esc(sp.id) + '">&times;</button></div>';
+            '<button type="button" class="btn-link btn-sm" data-edit-spectacle data-id="' + esc(sp.id) + '" data-titre="' + esc(sp.titre || "") + '" data-date="' + esc(sp.date_spectacle || "") + '" data-lieu="' + esc(sp.lieu || "") + '" data-prix="' + esc(sp.prix || "") + '" data-descriptif="' + esc(sp.descriptif || "") + '" title="Modifier ce spectacle" style="margin-right:8px;">✏️</button>' +
+            '<button class="remove-x" data-remove="spectacles" data-id="' + esc(sp.id) + '" title="Supprimer">&times;</button></div>';
         }).join("") : '<p class="empty-hint">Aucun spectacle annoncé pour l’instant.</p>',
         form: (
           '<form class="add-form" data-kind="spectacle" data-troupe="' + esc(t.id) + '">' +
+            '<input type="hidden" name="edit_id" value="">' +
             '<label style="margin-top:0;">Titre du spectacle</label><input type="text" name="titre" placeholder="Titre du spectacle" required autocomplete="off">' +
             '<div class="form-grid">' +
               '<div><label>Date</label><input type="date" name="date_spectacle" required autocomplete="off"></div>' +
@@ -1093,7 +1132,7 @@
             "</div>" +
             '<label>Prix</label><input type="text" name="prix" placeholder="Ex : 10€, gratuit…" style="max-width:220px;" autocomplete="off">' +
             '<label>Descriptif</label><textarea name="descriptif" rows="3" placeholder="Présentation du spectacle"></textarea>' +
-            '<label>Affiche<span class="field-hint">Format image, 1 Mo maximum</span></label><input type="file" name="affiche" accept="image/*">' +
+            '<label>Affiche<span class="field-hint">Format image, 1 Mo maximum — ne rien choisir garde l’affiche actuelle en cas de modification</span></label><input type="file" name="affiche" accept="image/*">' +
             '<button type="submit" class="btn btn-sm" style="margin-top:10px;">Annoncer ce spectacle</button>' +
           "</form>"
         )
@@ -1170,7 +1209,27 @@
   /* ================= Carte du monde ================= */
   var leafletMap = null;
   async function renderMapScreen() {
-    return '<h2>🗺️ Où sont les troupes ?</h2><div id="map-container"></div><p class="hint" style="margin-top:8px;">Les troupes sont placées d’après leur ville — la position est approximative.</p>';
+    var isAdmin = !!(myProfile && myProfile.is_admin);
+    var adminToolHtml = "";
+    if (isAdmin) {
+      var troupes = await fetchAllTroupes();
+      var manquantes = troupesSansPosition(troupes);
+      var summaryHtml = lastGeocodeSummary ? '<p class="hint" style="margin-top:8px;">' + esc(lastGeocodeSummary) + "</p>" : "";
+      lastGeocodeSummary = "";
+      if (manquantes.length) {
+        adminToolHtml = (
+          '<div class="card" style="margin-top:14px;">' +
+            '<p class="hint" style="margin:0 0 10px;">' + manquantes.length + (manquantes.length > 1 ? " troupes ont" : " troupe a") + ' une ville renseignée mais n’apparaissent pas encore sur la carte (souvent des troupes ajoutées par import). Outil réservé aux admins.</p>' +
+            '<button type="button" class="btn-ghost btn-sm" id="geocode-missing-btn">📍 Localiser ces ' + manquantes.length + ' troupes</button>' +
+            '<p id="geocode-missing-status" class="hint" style="margin-top:8px;"></p>' +
+            summaryHtml +
+          "</div>"
+        );
+      } else if (summaryHtml) {
+        adminToolHtml = '<div class="card" style="margin-top:14px;">' + summaryHtml + "</div>";
+      }
+    }
+    return '<h2>🗺️ Où sont les troupes ?</h2><div id="map-container"></div><p class="hint" style="margin-top:8px;">Les troupes sont placées d’après leur ville — la position est approximative.</p>' + adminToolHtml;
   }
   async function initLeafletMap() {
     var el = $("map-container");
@@ -1389,7 +1448,37 @@
       var toggleTarget = $(toggleBtn.getAttribute("data-toggle"));
       if (toggleTarget) {
         toggleTarget.hidden = !toggleTarget.hidden;
-        if (!toggleTarget.hidden) { var firstField = toggleTarget.querySelector("input,textarea,select"); if (firstField) firstField.focus(); }
+        if (!toggleTarget.hidden) {
+          if (toggleBtn.getAttribute("data-toggle") === "toggle-spectacle-form") {
+            var specForm = toggleTarget.querySelector(".add-form");
+            if (specForm) {
+              specForm.reset();
+              if (specForm.edit_id) specForm.edit_id.value = "";
+              var specSubmitBtn = specForm.querySelector("button[type=submit]");
+              if (specSubmitBtn) specSubmitBtn.textContent = "Annoncer ce spectacle";
+            }
+          }
+          var firstField = toggleTarget.querySelector("input,textarea,select"); if (firstField) firstField.focus();
+        }
+      }
+      return;
+    }
+
+    var editSpectacleBtn = e.target.closest("[data-edit-spectacle]");
+    if (editSpectacleBtn) {
+      var specWrap = $("toggle-spectacle-form");
+      var specEditForm = specWrap ? specWrap.querySelector(".add-form") : null;
+      if (specWrap && specEditForm) {
+        specEditForm.titre.value = editSpectacleBtn.getAttribute("data-titre") || "";
+        specEditForm.date_spectacle.value = editSpectacleBtn.getAttribute("data-date") || "";
+        specEditForm.lieu.value = editSpectacleBtn.getAttribute("data-lieu") || "";
+        specEditForm.prix.value = editSpectacleBtn.getAttribute("data-prix") || "";
+        specEditForm.descriptif.value = editSpectacleBtn.getAttribute("data-descriptif") || "";
+        specEditForm.edit_id.value = editSpectacleBtn.getAttribute("data-id") || "";
+        var specEditSubmitBtn = specEditForm.querySelector("button[type=submit]");
+        if (specEditSubmitBtn) specEditSubmitBtn.textContent = "Enregistrer les modifications";
+        specWrap.hidden = false;
+        specEditForm.titre.focus();
       }
       return;
     }
@@ -1448,6 +1537,21 @@
       busy = false;
       if (delRes.error) { confirmDeleteTroupeBtn.parentElement.insertAdjacentHTML("beforeend", '<p class="error-msg">' + esc(delRes.error) + "</p>"); return; }
       setHash("#/troupes");
+      return;
+    }
+    var geocodeMissingBtn = e.target.closest("#geocode-missing-btn");
+    if (geocodeMissingBtn) {
+      if (busy) return;
+      busy = true;
+      geocodeMissingBtn.disabled = true;
+      var geoStatusEl = $("geocode-missing-status");
+      if (geoStatusEl) geoStatusEl.textContent = "Localisation en cours…";
+      var geoResult = await geocoderTroupesManquantes(function (done, total, trouvees) {
+        if (geoStatusEl) geoStatusEl.textContent = "Localisation en cours… " + done + " / " + total + " (déjà " + trouvees + " trouvée" + (trouvees > 1 ? "s" : "") + ")";
+      });
+      busy = false;
+      lastGeocodeSummary = geoResult.trouvees + " troupe" + (geoResult.trouvees > 1 ? "s localisées" : " localisée") + " sur " + geoResult.total + ".";
+      render();
       return;
     }
     var removeLien = e.target.closest("[data-remove-lien]");
@@ -1683,6 +1787,7 @@
           });
         } else if (kind === "spectacle") {
           var spTroupeId = addForm.getAttribute("data-troupe");
+          var spEditId = addForm.edit_id ? addForm.edit_id.value : "";
           var afficheFile = addForm.affiche.files[0];
           var afficheUrl = null;
           if (afficheFile) {
@@ -1692,15 +1797,21 @@
             if (upA.error) { if (statusEl) statusEl.textContent = "Affiche : " + upA.error; busy = false; return; }
             afficheUrl = upA.url;
           }
-          await addRelated("spectacles", {
-            troupe_id: spTroupeId,
+          var spectaclePayload = {
             titre: addForm.titre.value.trim(),
             date_spectacle: addForm.date_spectacle.value,
             lieu: addForm.lieu.value.trim(),
             prix: addForm.prix.value.trim(),
-            descriptif: addForm.descriptif.value.trim(),
-            affiche_url: afficheUrl
-          });
+            descriptif: addForm.descriptif.value.trim()
+          };
+          if (spEditId) {
+            if (afficheUrl) spectaclePayload.affiche_url = afficheUrl;
+            await updateRelated("spectacles", spEditId, spectaclePayload);
+          } else {
+            spectaclePayload.troupe_id = spTroupeId;
+            spectaclePayload.affiche_url = afficheUrl;
+            await addRelated("spectacles", spectaclePayload);
+          }
         } else if (kind === "tournoi") {
           await addRelated("tournois", {
             owner_type: addForm.getAttribute("data-owner-type"), owner_id: addForm.getAttribute("data-owner-id"),
