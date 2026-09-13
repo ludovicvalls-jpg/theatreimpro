@@ -1083,10 +1083,11 @@
           photos.length
             ? '<p class="hint" style="margin-top:0;">Supprime d’abord la photo actuelle (la croix ci-dessus) avant d’en ajouter une nouvelle.</p>'
             : (
-              '<p class="hint" style="margin-top:0;">Format image, 1 Mo maximum.</p>' +
+              '<p class="hint" style="margin-top:0;">Format image, 1 Mo maximum — ou colle un lien direct vers une image trouvée sur Internet (pas de limite dans ce cas).</p>' +
               '<form class="add-form" data-kind="photo" data-owner-type="troupe" data-owner-id="' + esc(t.id) + '">' +
-                '<input type="file" name="photo" accept="image/*" required>' +
-                '<button type="submit" class="btn btn-sm">Envoyer</button>' +
+                '<input type="file" name="photo" accept="image/*">' +
+                '<label style="margin-top:8px;">Ou un lien direct vers une image</label><input type="url" name="photo_url" placeholder="https://…" autocomplete="off">' +
+                '<button type="submit" class="btn btn-sm" style="margin-top:10px;">Envoyer</button>' +
               "</form>"
             )
         )
@@ -1133,6 +1134,7 @@
             '<label>Prix</label><input type="text" name="prix" placeholder="Ex : 10€, gratuit…" style="max-width:220px;" autocomplete="off">' +
             '<label>Descriptif</label><textarea name="descriptif" rows="3" placeholder="Présentation du spectacle"></textarea>' +
             '<label>Affiche<span class="field-hint">Format image, 1 Mo maximum — ne rien choisir garde l’affiche actuelle en cas de modification</span></label><input type="file" name="affiche" accept="image/*">' +
+            '<label>Ou un lien direct vers une image</label><input type="url" name="affiche_url" placeholder="https://…" autocomplete="off">' +
             '<button type="submit" class="btn btn-sm" style="margin-top:10px;">Annoncer ce spectacle</button>' +
           "</form>"
         )
@@ -1198,6 +1200,7 @@
             '<div><label>Email de contact</label><input type="email" name="email_contact" value="' + v("email_contact") + '" autocomplete="off"></div>' +
           "</div>" +
           '<label>Logo<span class="field-hint">Format image, 1 Mo maximum</span></label><input type="file" id="troupe-logo-input" accept="image/*">' +
+          '<label>Ou un lien direct vers une image</label><input type="url" id="troupe-logo-url-input" placeholder="https://…" autocomplete="off">' +
           '<button type="submit" class="btn" style="margin-top:18px;">Enregistrer</button>' +
         "</form>" +
         '<p id="troupe-form-error" class="error-msg"></p>' +
@@ -1286,9 +1289,10 @@
           (p.banner_url ? '<img src="' + esc(p.banner_url) + '" class="profile-banner-img" alt="" style="margin-bottom:14px;">' : "") +
           '<label style="margin-top:0;">Bannière (une photo de toi en train d’improviser, affichée en haut de ta fiche)<span class="field-hint">Format image, 1 Mo maximum</span></label>' +
           '<input type="file" id="banner-input" accept="image/*">' +
+          '<input type="url" id="banner-url-input" placeholder="Ou un lien direct vers une image (https://…)" autocomplete="off" style="margin-top:6px;">' +
           '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:16px 0 6px;">' +
             avatarHtml(p.avatar_url, p.pseudo, "avatar-md") +
-            '<label style="margin:0;flex:1 1 200px;"><span style="display:block;color:var(--gold);font-weight:600;font-size:0.82rem;margin-bottom:5px;">Photo de profil<span class="field-hint" style="display:inline;color:var(--text-dim);font-weight:400;">— 1 Mo maximum</span></span><input type="file" id="avatar-input" accept="image/*"></label>' +
+            '<label style="margin:0;flex:1 1 200px;"><span style="display:block;color:var(--gold);font-weight:600;font-size:0.82rem;margin-bottom:5px;">Photo de profil<span class="field-hint" style="display:inline;color:var(--text-dim);font-weight:400;">— 1 Mo maximum</span></span><input type="file" id="avatar-input" accept="image/*"><input type="url" id="avatar-url-input" placeholder="Ou un lien direct (https://…)" autocomplete="off" style="margin-top:6px;width:100%;"></label>' +
           "</div>" +
           '<div class="form-grid">' +
             '<div><label>Pseudo *</label><input type="text" name="pseudo" required pattern="[a-zA-Z0-9_\\-\\.]{3,30}" autocomplete="off" value="' + v("pseudo") + '" ' + (isNew ? "" : "readonly") + "></div>" +
@@ -1394,9 +1398,11 @@
           return '<div style="position:relative;"><img src="' + esc(ph.url) + '" class="photo-zoom-trigger" data-photo="' + esc(ph.url) + '" alt="">' +
             '<button class="remove-x" data-remove="photos" data-id="' + esc(ph.id) + '" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);border-radius:50%;color:#fff;">&times;</button></div>';
         }).join("") + "</div>" : "") +
-        '<p class="hint" style="margin-top:8px;">Format image, 1 Mo maximum.</p>' +
+        '<p class="hint" style="margin-top:8px;">Format image, 1 Mo maximum — ou colle un lien direct vers une image trouvée sur Internet (pas de limite dans ce cas).</p>' +
         '<form class="add-form" data-kind="photo" data-owner-type="profile" data-owner-id="' + esc(p.id) + '">' +
-          '<input type="file" name="photo" accept="image/*" required><button type="submit" class="btn btn-sm">Envoyer</button>' +
+          '<input type="file" name="photo" accept="image/*">' +
+          '<label style="margin-top:8px;">Ou un lien direct vers une image</label><input type="url" name="photo_url" placeholder="https://…" autocomplete="off">' +
+          '<button type="submit" class="btn btn-sm" style="margin-top:10px;">Envoyer</button>' +
         "</form>" +
 
         '<div class="section-title">🎬 Vidéos</div>' +
@@ -1677,21 +1683,31 @@
       };
       if (!/^[a-zA-Z0-9_\-.]{3,30}$/.test(fields.pseudo)) { errEl2.textContent = "Pseudo invalide (3 à 30 caractères, lettres/chiffres/_-. uniquement)."; return; }
       busy = true;
-      var avatarFile = $("avatar-input") && $("avatar-input").files[0];
-      if (avatarFile) {
-        var sizeErrA = checkImageSize(avatarFile);
-        if (sizeErrA) { busy = false; errEl2.textContent = "Photo de profil : " + sizeErrA; return; }
-        var up = await uploadAvatar(avatarFile);
-        if (up.error) { busy = false; errEl2.textContent = "Photo : " + up.error; return; }
-        fields.avatar_url = up.url;
+      var avatarUrlPasted = $("avatar-url-input") ? $("avatar-url-input").value.trim() : "";
+      if (avatarUrlPasted) {
+        fields.avatar_url = avatarUrlPasted;
+      } else {
+        var avatarFile = $("avatar-input") && $("avatar-input").files[0];
+        if (avatarFile) {
+          var sizeErrA = checkImageSize(avatarFile);
+          if (sizeErrA) { busy = false; errEl2.textContent = "Photo de profil : " + sizeErrA; return; }
+          var up = await uploadAvatar(avatarFile);
+          if (up.error) { busy = false; errEl2.textContent = "Photo : " + up.error; return; }
+          fields.avatar_url = up.url;
+        }
       }
-      var bannerFile = $("banner-input") && $("banner-input").files[0];
-      if (bannerFile) {
-        var sizeErrBn = checkImageSize(bannerFile);
-        if (sizeErrBn) { busy = false; errEl2.textContent = "Bannière : " + sizeErrBn; return; }
-        var upB = await uploadBanner(bannerFile);
-        if (upB.error) { busy = false; errEl2.textContent = "Bannière : " + upB.error; return; }
-        fields.banner_url = upB.url;
+      var bannerUrlPasted = $("banner-url-input") ? $("banner-url-input").value.trim() : "";
+      if (bannerUrlPasted) {
+        fields.banner_url = bannerUrlPasted;
+      } else {
+        var bannerFile = $("banner-input") && $("banner-input").files[0];
+        if (bannerFile) {
+          var sizeErrBn = checkImageSize(bannerFile);
+          if (sizeErrBn) { busy = false; errEl2.textContent = "Bannière : " + sizeErrBn; return; }
+          var upB = await uploadBanner(bannerFile);
+          if (upB.error) { busy = false; errEl2.textContent = "Bannière : " + upB.error; return; }
+          fields.banner_url = upB.url;
+        }
       }
       if (!fields.ville && !fields.pays) {
         // pas de géocodage possible
@@ -1729,8 +1745,11 @@
         email_contact: tf.email_contact.value.trim()
       };
       busy = true;
-      var logoFile = $("troupe-logo-input") && $("troupe-logo-input").files[0];
-      if (logoFile) {
+      var logoUrlPasted = $("troupe-logo-url-input") ? $("troupe-logo-url-input").value.trim() : "";
+      var logoFile = logoUrlPasted ? null : ($("troupe-logo-input") && $("troupe-logo-input").files[0]);
+      if (logoUrlPasted) {
+        tfields.logo_url = logoUrlPasted;
+      } else if (logoFile) {
         var sizeErrL = checkImageSize(logoFile);
         if (sizeErrL) { busy = false; errEl3.textContent = "Logo : " + sizeErrL; return; }
       }
@@ -1788,9 +1807,12 @@
         } else if (kind === "spectacle") {
           var spTroupeId = addForm.getAttribute("data-troupe");
           var spEditId = addForm.edit_id ? addForm.edit_id.value : "";
-          var afficheFile = addForm.affiche.files[0];
+          var afficheUrlPasted = addForm.affiche_url ? addForm.affiche_url.value.trim() : "";
+          var afficheFile = afficheUrlPasted ? null : addForm.affiche.files[0];
           var afficheUrl = null;
-          if (afficheFile) {
+          if (afficheUrlPasted) {
+            afficheUrl = afficheUrlPasted;
+          } else if (afficheFile) {
             var sizeErrA = checkImageSize(afficheFile);
             if (sizeErrA) { if (statusEl) statusEl.textContent = "Affiche : " + sizeErrA; busy = false; return; }
             var upA = await uploadPhoto("troupe", spTroupeId, afficheFile);
@@ -1832,11 +1854,17 @@
             url: addForm.url.value.trim(), caption: addForm.caption.value.trim()
           });
         } else if (kind === "photo") {
-          var file = addForm.photo.files[0];
-          if (file) {
+          var photoUrlPasted = addForm.photo_url ? addForm.photo_url.value.trim() : "";
+          var file = photoUrlPasted ? null : addForm.photo.files[0];
+          var ownerType = addForm.getAttribute("data-owner-type"), ownerId = addForm.getAttribute("data-owner-id");
+          if (photoUrlPasted) {
+            await addRelated("photos", { owner_type: ownerType, owner_id: ownerId, url: photoUrlPasted });
+          } else if (!file) {
+            if (statusEl) statusEl.textContent = "Choisis un fichier ou colle un lien vers une image.";
+            busy = false; return;
+          } else {
             var sizeErrP = checkImageSize(file);
             if (sizeErrP) { if (statusEl) statusEl.textContent = sizeErrP; busy = false; return; }
-            var ownerType = addForm.getAttribute("data-owner-type"), ownerId = addForm.getAttribute("data-owner-id");
             var upr = await uploadPhoto(ownerType, ownerId, file);
             if (upr.error) { if (statusEl) statusEl.textContent = upr.error; busy = false; return; }
             await addRelated("photos", { owner_type: ownerType, owner_id: ownerId, url: upr.url });
