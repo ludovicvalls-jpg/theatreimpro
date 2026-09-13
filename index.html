@@ -225,6 +225,17 @@
   }
   .letter-heading:first-child { margin-top: 0; }
 
+  .country-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+  .country-tile {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 8px; cursor: pointer; color: var(--text);
+  }
+  .country-tile:hover { border-color: var(--gold); transform: translateY(-2px); }
+  .country-tile .country-flag { font-size: 1.9rem; line-height: 1; }
+  .country-tile .country-name { font-weight: 600; font-size: 0.85rem; text-align: center; }
+  .country-tile .country-count { color: var(--text-dim); font-size: 0.78rem; }
+
   .spectacle-troupe { font-size: 0.85rem; margin: -2px 0 4px; }
   .spectacle-troupe a { color: var(--text); text-decoration: underline; }
   .spectacle-list-grid { display: flex; flex-direction: column; }
@@ -342,6 +353,9 @@
       troupes_title: "👥 Les troupes", troupes_count_plural: " troupes inscrites", troupes_count_singular: " troupe inscrite",
       troupes_create_btn: "+ Créer une troupe", troupes_login_hint: "Connecte-toi pour créer une troupe.",
       troupes_search_placeholder: "Chercher une troupe, une ville, un pays…", troupes_empty: "Aucune troupe pour l’instant.",
+      troupes_country_hint: "Choisis un pays, ou utilise la recherche ci-dessus.",
+      troupes_back_to_countries: "&larr; Retour aux pays",
+      troupes_country_unknown: "Pays non renseigné",
       founded_in: " · fondée en ",
       btn_modify: "✏️ Modifier",
       stat_members: "membres", stat_workshops: "stages", stat_shows: "spectacles", stat_countries: "pays", stat_troupes: "troupes",
@@ -396,6 +410,9 @@
       troupes_title: "👥 Troupes", troupes_count_plural: " troupes registered", troupes_count_singular: " troupe registered",
       troupes_create_btn: "+ Create a troupe", troupes_login_hint: "Log in to create a troupe.",
       troupes_search_placeholder: "Search by troupe, city, country…", troupes_empty: "No troupes yet.",
+      troupes_country_hint: "Choose a country, or use the search above.",
+      troupes_back_to_countries: "&larr; Back to countries",
+      troupes_country_unknown: "Country not set",
       founded_in: " · founded in ",
       btn_modify: "✏️ Edit",
       stat_members: "members", stat_workshops: "workshops", stat_shows: "shows", stat_countries: "countries", stat_troupes: "troupes",
@@ -455,6 +472,7 @@
   var _playersAll = [];
   var _troupesAll = [];
   var _spectaclesAll = [];
+  var _troupesSelectedCountry = null;
   var lastGeocodeSummary = "";
   var busy = false;
 
@@ -1072,14 +1090,75 @@
   async function renderTroupes() {
     var troupes = await fetchAllTroupes();
     _troupesAll = troupes;
-    var rows = troupesListWithLettersHtml(troupes);
+    _troupesSelectedCountry = null;
     return (
       "<h2>" + tr("troupes_title") + "</h2>" +
       '<p class="hint" style="margin:2px 0 12px;">' + troupes.length + (troupes.length > 1 ? tr("troupes_count_plural") : tr("troupes_count_singular")) + "</p>" +
       (session ? '<button class="btn" data-nav="#/troupe/nouvelle" style="margin:12px 0 6px;">' + tr("troupes_create_btn") + "</button>" : '<p class="hint" style="margin:12px 0;">' + tr("troupes_login_hint") + "</p>") +
       '<input type="search" id="troupes-search" placeholder="' + tr("troupes_search_placeholder") + '" style="width:100%;margin:6px 0 18px;" autocomplete="off">' +
-      '<div class="directory-list" id="troupes-list">' + (rows || '<p class="empty-hint">' + tr("troupes_empty") + "</p>") + "</div>"
+      '<div class="directory-list" id="troupes-list">' + troupesBodyHtml(troupes) + "</div>"
     );
+  }
+  // Classement par pays : petit drapeau (approximatif, déduit du texte du champ "Pays") pour
+  // chaque pays représenté dans l'annuaire des troupes.
+  var COUNTRY_FLAGS = {
+    "france": "🇫🇷", "allemagne": "🇩🇪", "autriche": "🇦🇹", "suisse": "🇨🇭",
+    "belgique": "🇧🇪", "luxembourg": "🇱🇺", "italie": "🇮🇹", "espagne": "🇪🇸",
+    "pays-bas": "🇳🇱", "royaume-uni": "🇬🇧", "portugal": "🇵🇹", "canada": "🇨🇦",
+    "etats-unis": "🇺🇸", "quebec": "🇨🇦"
+  };
+  function flagForCountry(pays) {
+    var key = stripAccents((pays || "").trim().toLowerCase());
+    return COUNTRY_FLAGS[key] || "🌐";
+  }
+  function troupeCountryLabel(t) {
+    var p = (t.pays || "").trim();
+    return p || tr("troupes_country_unknown");
+  }
+  // Regroupe les troupes par pays (le champ "Pays" est un texte libre, donc on regroupe en
+  // ignorant les accents/majuscules pour éviter que "france" et "France" fassent deux groupes).
+  function groupTroupesByCountry(troupes) {
+    var groups = {};
+    var order = [];
+    troupes.forEach(function (t) {
+      var label = troupeCountryLabel(t);
+      var key = stripAccents(label).toLowerCase();
+      if (!groups[key]) { groups[key] = { label: label, flag: flagForCountry(t.pays), items: [] }; order.push(key); }
+      groups[key].items.push(t);
+    });
+    return order.map(function (k) { return groups[k]; }).sort(function (a, b) { return b.items.length - a.items.length; });
+  }
+  function troupesCountryGridHtml(troupes) {
+    var groups = groupTroupesByCountry(troupes);
+    return (
+      '<p class="hint" style="margin:0 0 14px;">' + tr("troupes_country_hint") + "</p>" +
+      '<div class="country-grid">' +
+      groups.map(function (g) {
+        return (
+          '<button type="button" class="country-tile" data-country-tile="' + esc(g.label) + '">' +
+            '<span class="country-flag">' + g.flag + "</span>" +
+            '<span class="country-name">' + esc(g.label) + "</span>" +
+            '<span class="country-count">' + g.items.length + "</span>" +
+          "</button>"
+        );
+      }).join("") +
+      "</div>"
+    );
+  }
+  function troupesCountryListHtml(troupes, countryLabel) {
+    var filtered = troupes.filter(function (t) { return troupeCountryLabel(t) === countryLabel; });
+    var flag = filtered.length ? flagForCountry(filtered[0].pays) : "🌐";
+    return (
+      '<button type="button" class="back-btn" id="troupes-back-to-countries" style="margin-bottom:12px;">' + tr("troupes_back_to_countries") + "</button>" +
+      '<p class="hint" style="margin:0 0 12px;font-weight:600;">' + flag + " " + esc(countryLabel) + " — " + filtered.length + (filtered.length > 1 ? tr("troupes_count_plural") : tr("troupes_count_singular")) + "</p>" +
+      (troupesListWithLettersHtml(filtered) || '<p class="empty-hint">' + tr("troupes_empty") + "</p>")
+    );
+  }
+  // Contenu de #troupes-list : la grille des pays par défaut, ou la liste alphabétique d'un
+  // pays une fois cliqué (la recherche, elle, ignore toujours ce classement — voir plus bas).
+  function troupesBodyHtml(troupes) {
+    if (_troupesSelectedCountry) return troupesCountryListHtml(troupes, _troupesSelectedCountry);
+    return troupesCountryGridHtml(troupes);
   }
   // Enlève les accents pour trier/regrouper "École" avec E, "Ça" avec C, etc.
   function stripAccents(s) {
@@ -1879,6 +1958,24 @@
       }
       return;
     }
+    var countryTile = e.target.closest("[data-country-tile]");
+    if (countryTile) {
+      _troupesSelectedCountry = countryTile.getAttribute("data-country-tile");
+      var tList2 = $("troupes-list");
+      if (tList2) tList2.innerHTML = troupesBodyHtml(_troupesAll);
+      var tSearchEl = $("troupes-search");
+      if (tSearchEl) tSearchEl.value = "";
+      return;
+    }
+    var backToCountries = e.target.closest("#troupes-back-to-countries");
+    if (backToCountries) {
+      _troupesSelectedCountry = null;
+      var tList3 = $("troupes-list");
+      if (tList3) tList3.innerHTML = troupesBodyHtml(_troupesAll);
+      var tSearchEl2 = $("troupes-search");
+      if (tSearchEl2) tSearchEl2.value = "";
+      return;
+    }
     var removeLien = e.target.closest("[data-remove-lien]");
     if (removeLien && myProfile) {
       if (busy) return;
@@ -1910,12 +2007,19 @@
     }
     if (el.id === "troupes-search") {
       var tq = el.value.trim().toLowerCase();
-      var tFiltered = !tq ? _troupesAll : _troupesAll.filter(function (t) {
+      var tList = $("troupes-list");
+      if (!tq) {
+        // Champ vidé : on revient à la vue précédente (grille des pays, ou liste du pays choisi).
+        if (tList) tList.innerHTML = troupesBodyHtml(_troupesAll);
+        return;
+      }
+      // La recherche cherche toujours dans TOUTES les troupes, quel que soit le pays affiché —
+      // c'est voulu, pour ne jamais perdre la recherche même avec le classement par pays.
+      var tFiltered = _troupesAll.filter(function (t) {
         return (t.nom || "").toLowerCase().indexOf(tq) !== -1 ||
                (t.ville || "").toLowerCase().indexOf(tq) !== -1 ||
                (t.pays || "").toLowerCase().indexOf(tq) !== -1;
       });
-      var tList = $("troupes-list");
       if (tList) tList.innerHTML = tFiltered.length ? troupesListWithLettersHtml(tFiltered) : '<p class="empty-hint">' + tr("search_no_results") + '</p>';
       return;
     }
