@@ -226,13 +226,18 @@
   .link-list.link-icons { display: flex; gap: 16px; align-items: center; }
   .icon-link { font-size: 1.7rem; line-height: 1; text-decoration: none; margin: 0 !important; }
   .icon-link:hover { opacity: 0.75; }
+  .icon-link-instagram {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.7rem; height: 1.7rem; border-radius: 8px; color: #fff;
+    background: radial-gradient(circle at 30% 110%, #ffdb8c 0%, #ee2a7b 45%, #6228d7 100%);
+  }
   .instagram-badge {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 28px; height: 28px; border-radius: 50%; background: var(--surface);
-    border: 1px solid var(--border); font-size: 1rem; text-decoration: none;
-    vertical-align: middle; margin-left: 4px;
+    width: 28px; height: 28px; border-radius: 8px; color: #fff;
+    background: radial-gradient(circle at 30% 110%, #ffdb8c 0%, #ee2a7b 45%, #6228d7 100%);
+    text-decoration: none; vertical-align: middle; margin-left: 4px;
   }
-  .instagram-badge:hover { border-color: var(--gold); }
+  .instagram-badge:hover, .icon-link-instagram:hover { opacity: 0.85; }
 
   .photo-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin: 10px 0; }
   .photo-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; }
@@ -530,6 +535,9 @@
   var ICON_LOGIN_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9-4h-8v2h8v14h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>';
   var ICON_LOGOUT_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>';
   var ICON_MAIL_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>';
+  // Icône Instagram (silhouette classique carré arrondi + cercle + petit point), en traits ("currentColor")
+  // pour s'adapter à la fois au badge dégradé de la fiche joueur et au style "icon-link" plus simple des troupes.
+  var ICON_INSTAGRAM_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg>';
 
   /* ================= État ================= */
   var session = null;
@@ -1217,7 +1225,7 @@
         '<div class="profile-head">' +
           avatarHtml(profile.avatar_url, profile.pseudo, "avatar-xl") +
           "<div>" +
-            "<h2>" + esc(profile.nom_complet || profile.pseudo) + (profile.instagram ? ' <a href="' + esc(profile.instagram) + '" target="_blank" rel="noopener" class="instagram-badge" title="Instagram">📷</a>' : "") + "</h2>" +
+            "<h2>" + esc(profile.nom_complet || profile.pseudo) + (profile.instagram ? ' <a href="' + esc(profile.instagram) + '" target="_blank" rel="noopener" class="instagram-badge" title="Instagram">' + ICON_INSTAGRAM_SVG + '</a>' : "") + "</h2>" +
             '<div class="profile-pseudo">@' + esc(profile.pseudo) + "</div>" +
             '<div class="profile-meta">' + (profile.ville ? "📍 " + esc(profile.ville) : "") + (profile.pays ? " " + esc(profile.pays) : "") + "</div>" +
             '<div class="level-pill">' + tr("level_label") + " " + lvl.level + " — " + esc(lvl.title) + "</div>" +
@@ -1525,7 +1533,7 @@
 
         '<div class="link-list link-icons">' +
           (t.site_web ? '<a href="' + esc(t.site_web) + '" target="_blank" rel="noopener" class="icon-link" title="' + tr("link_website_title") + '">🌐</a>' : "") +
-          (t.instagram ? '<a href="' + esc(t.instagram) + '" target="_blank" rel="noopener" class="icon-link" title="' + tr("link_instagram_title") + '">📷</a>' : "") +
+          (t.instagram ? '<a href="' + esc(t.instagram) + '" target="_blank" rel="noopener" class="icon-link icon-link-instagram" title="' + tr("link_instagram_title") + '">' + ICON_INSTAGRAM_SVG + '</a>' : "") +
           (t.facebook ? '<a href="' + esc(t.facebook) + '" target="_blank" rel="noopener" class="icon-link" title="' + tr("link_facebook_title") + '">📘</a>' : "") +
           (t.email_contact ? '<a href="mailto:' + esc(t.email_contact) + '" class="icon-link" title="' + esc(t.email_contact) + '">✉️</a>' : "") +
         "</div>" +
@@ -1792,14 +1800,14 @@
       '<button class="back-btn" data-nav="' + (id ? "#/troupe/" + esc(id) : "#/troupes") + '">&larr; Retour</button>' +
       '<div class="card">' +
         "<h2>" + (id ? "Modifier la troupe" : "Créer une troupe") + "</h2>" +
-        '<form id="troupe-form" data-id="' + esc(id || "") + '">' +
+        '<form id="troupe-form" data-id="' + esc(id || "") + '" autocomplete="off">' +
           '<label>Nom de la troupe</label><input type="text" name="nom" required value="' + v("nom") + '" autocomplete="off">' +
           '<label>Adresse (numéro, rue) <span class="hint">— optionnel, pour une position plus précise sur la carte</span></label><input type="text" name="adresse" value="' + v("adresse") + '" autocomplete="off">' +
           '<div class="form-grid">' +
             '<div><label>Ville</label><input type="text" name="ville" value="' + v("ville") + '" autocomplete="off"></div>' +
             '<div><label>Pays</label><input type="text" name="pays" value="' + v("pays") + '" autocomplete="off"></div>' +
           "</div>" +
-          '<label>Fondée en</label><input type="number" name="fondee_en" min="1950" max="' + currentYear() + '" value="' + v("fondee_en") + '" style="max-width:140px;" autocomplete="off">' +
+          '<label>Fondée en</label><input type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" name="fondee_en" value="' + v("fondee_en") + '" style="max-width:140px;" autocomplete="off">' +
           '<label>Description / historique</label><textarea name="description" rows="3">' + v("description") + "</textarea>" +
           '<label>Style d’impro</label><input type="text" name="style_impro" value="' + v("style_impro") + '" autocomplete="off">' +
           '<label>Lieu de résidence / répétition</label><input type="text" name="lieu_residence" value="' + v("lieu_residence") + '" autocomplete="off">' +
@@ -1941,7 +1949,7 @@
       '<div class="card">' +
         "<h2>" + (isNew ? "Créer mon passeport" : "Mon passeport") + "</h2>" +
         (isNew ? '<p class="hint">Choisis un pseudo unique — c’est ce qui formera le lien de ta fiche.</p>' : "") +
-        '<form id="profile-form">' +
+        '<form id="profile-form" autocomplete="off">' +
           (p.banner_url ? '<img src="' + esc(p.banner_url) + '" class="profile-banner-img" alt="" style="margin-bottom:14px;">' : "") +
           '<label style="margin-top:0;">Bannière (une photo de toi en train d’improviser, affichée en haut de ta fiche)<span class="field-hint">Format image, 1 Mo maximum</span></label>' +
           '<input type="file" id="banner-input" accept="image/*">' +
@@ -1959,7 +1967,7 @@
             '<div><label>Pays</label><input type="text" name="pays" value="' + v("pays") + '" autocomplete="off"></div>' +
           "</div>" +
           '<div class="form-grid">' +
-            '<div><label>Année de début d’impro</label><input type="number" name="annee_debut_impro" min="1950" max="' + currentYear() + '" value="' + v("annee_debut_impro") + '" autocomplete="off"></div>' +
+            '<div><label>Année de début d’impro</label><input type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" name="annee_debut_impro" value="' + v("annee_debut_impro") + '" autocomplete="off"></div>' +
             '<div><label>MENTOR (celui qui t’a fait découvrir l’impro)</label><input type="text" name="mentor" value="' + v("mentor") + '" autocomplete="off"></div>' +
           "</div>" +
           '<label>Disciplines pratiquées</label><div>' + disciplinesHtml + "</div>" +
@@ -2017,7 +2025,7 @@
         '<form class="add-form" data-kind="tournoi" data-owner-type="profile" data-owner-id="' + esc(p.id) + '">' +
           '<div class="form-row">' +
             '<input type="text" name="nom" placeholder="Nom du stage" required autocomplete="off">' +
-            '<input type="number" name="annee" placeholder="Année" min="1970" max="' + currentYear() + '" autocomplete="off">' +
+            '<input type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" name="annee" placeholder="Année" autocomplete="off">' +
             '<input type="text" name="ville" placeholder="Ville" autocomplete="off">' +
             '<input type="text" name="pays" placeholder="Pays" autocomplete="off">' +
             '<button type="submit" class="btn btn-sm">Ajouter</button>' +
