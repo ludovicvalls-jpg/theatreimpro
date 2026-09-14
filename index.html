@@ -69,21 +69,33 @@
   .btn-red:hover { background: var(--red-strong); }
 
   .top-nav {
-    display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between;
-    padding-bottom: 20px; margin-bottom: 24px; border-bottom: 2px solid var(--border);
+    display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between;
+    padding-bottom: 18px; margin-bottom: 24px; border-bottom: 2px solid var(--border);
   }
-  .top-nav .brand { font-family: "Bebas Neue", Georgia, serif; font-size: 1.6rem; letter-spacing: 0.03em; }
-  .top-nav .brand span { color: var(--curtain); }
-  .nav-links { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-  .nav-links button { background: none; border: none; color: var(--text-dim); padding: 6px 10px; font-size: 0.88rem; border-radius: 3px; }
-  .nav-links button:hover, .nav-links button.active { color: var(--text); background: var(--surface); }
-  .nav-links .icon-btn { width: 34px; height: 34px; border-radius: 50%; padding: 0; display: inline-flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; position: relative; }
-  .nav-links .icon-btn-green { background: #2e9e4f; }
-  .nav-links .icon-btn-green:hover { background: #278a44; color: #fff; }
-  .nav-links .icon-btn-red { background: #d92d3a; }
-  .nav-links .icon-btn-red:hover { background: #b6222d; color: #fff; }
-  .nav-links .icon-btn-mail { background: #3a7bd5; }
-  .nav-links .icon-btn-mail:hover, .nav-links .icon-btn-mail.active { background: #2f66b3; color: #fff; }
+  .top-nav .brand { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; background: none; border: none; padding: 0; color: var(--text); cursor: pointer; }
+  .top-nav .brand-title { font-family: "Bebas Neue", Georgia, serif; font-size: 1.6rem; letter-spacing: 0.03em; line-height: 1; }
+  .top-nav .brand-title span { color: var(--curtain); }
+  .top-nav .brand-sub { font-size: 0.66rem; color: var(--text-dim); letter-spacing: 0.02em; }
+  .nav-groups { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+  .nav-primary {
+    display: flex; flex-wrap: wrap; gap: 2px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px;
+  }
+  .nav-primary button { background: none; border: none; color: var(--text-dim); padding: 7px 14px; font-size: 0.85rem; border-radius: 999px; white-space: nowrap; }
+  .nav-primary button:hover { color: var(--text); }
+  .nav-primary button.active { background: var(--gold); color: #201804; font-weight: 600; }
+  .nav-account { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-left: 14px; border-left: 1px solid var(--border); }
+  .nav-account .nav-account-link { background: none; border: 1px solid var(--border); color: var(--text-dim); padding: 6px 13px; font-size: 0.85rem; border-radius: 999px; white-space: nowrap; }
+  .nav-account .nav-account-link:hover { color: var(--text); border-color: var(--text-dim); }
+  .nav-account .nav-account-link.active { border-color: var(--gold); color: var(--text); }
+  @media (max-width: 720px) { .nav-account { border-left: none; padding-left: 0; } }
+  .icon-btn { width: 34px; height: 34px; border-radius: 50%; padding: 0; display: inline-flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; position: relative; }
+  .icon-btn-green { background: #2e9e4f; }
+  .icon-btn-green:hover { background: #278a44; color: #fff; }
+  .icon-btn-red { background: #d92d3a; }
+  .icon-btn-red:hover { background: #b6222d; color: #fff; }
+  .icon-btn-mail { background: #3a7bd5; }
+  .icon-btn-mail:hover, .icon-btn-mail.active { background: #2f66b3; color: #fff; }
   .icon-badge {
     position: absolute; top: -3px; right: -3px; background: var(--red); color: #fff;
     border-radius: 50%; font-size: 0.62rem; line-height: 1; min-width: 16px; height: 16px;
@@ -214,6 +226,13 @@
   .link-list.link-icons { display: flex; gap: 16px; align-items: center; }
   .icon-link { font-size: 1.7rem; line-height: 1; text-decoration: none; margin: 0 !important; }
   .icon-link:hover { opacity: 0.75; }
+  .instagram-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%; background: var(--surface);
+    border: 1px solid var(--border); font-size: 1rem; text-decoration: none;
+    vertical-align: middle; margin-left: 4px;
+  }
+  .instagram-badge:hover { border-color: var(--gold); }
 
   .photo-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin: 10px 0; }
   .photo-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; }
@@ -833,8 +852,18 @@
     if (adresse) {
       var viaAdresse = await geocodeQuery([adresse, ville, pays].filter(Boolean).join(", "));
       if (viaAdresse) return viaAdresse;
+      await new Promise(function (r) { setTimeout(r, 1100); });
     }
-    return await geocodeQuery([ville, pays].filter(Boolean).join(", "));
+    var viaVillePays = await geocodeQuery([ville, pays].filter(Boolean).join(", "));
+    if (viaVillePays) return viaVillePays;
+    // Dernier repli : la ville toute seule, sans le pays. Utile quand le texte tapé dans "Pays"
+    // (une faute de frappe, un nom de pays dans une autre langue, ou un texte inattendu) empêche
+    // de trouver un résultat alors que la ville seule, elle, existe bien dans le service utilisé.
+    if (ville && pays) {
+      await new Promise(function (r) { setTimeout(r, 1100); });
+      return await geocodeQuery(ville);
+    }
+    return null;
   }
   // Troupes qui ont une ville/un pays/une adresse mais pas encore de position sur la carte
   // (typiquement des troupes ajoutées directement en base, sans passer par le formulaire du site,
@@ -852,17 +881,20 @@
     var aTraiter = troupesSansPosition(troupes);
     var total = aTraiter.length;
     var trouvees = 0;
+    var echecs = [];
     for (var i = 0; i < aTraiter.length; i++) {
       var t = aTraiter[i];
       var geo = await geocode(t.ville, t.pays, t.adresse);
       if (geo) {
         await updateTroupe(t.id, { latitude: geo.latitude, longitude: geo.longitude });
         trouvees++;
+      } else {
+        echecs.push(t);
       }
       if (onProgress) onProgress(i + 1, total, trouvees);
       if (i < aTraiter.length - 1) await new Promise(function (r) { setTimeout(r, 1100); });
     }
-    return { total: total, trouvees: trouvees };
+    return { total: total, trouvees: trouvees, echecs: echecs };
   }
 
   /* ================= Upload de fichiers (avatars / photos) ================= */
@@ -949,10 +981,17 @@
   function route() { view = parseHash(); render(); }
 
   var renderToken = 0;
-  async function render() {
+  // opts.preserveScroll : pour une petite action "sur place" (ajouter/retirer une ligne dans une
+  // liste de gestion) — évite l'écran "Chargement…" intermédiaire (qui fait s'effondrer puis
+  // regonfler la page, provoquant un saut visuel) et remet la page exactement où elle était après
+  // le nouveau rendu, plutôt que de remonter tout en haut comme lors d'une vraie navigation.
+  async function render(opts) {
+    opts = opts || {};
     var myToken = ++renderToken;
     _unreadCount = await compterMessagesNonLus();
-    appEl().innerHTML = renderNav() + '<p class="hint">' + tr("loading") + "</p>";
+    if (!opts.preserveScroll) {
+      appEl().innerHTML = renderNav() + '<p class="hint">' + tr("loading") + "</p>";
+    }
     var html = "";
     try {
       switch (view.screen) {
@@ -981,33 +1020,46 @@
     // du menu, sans attendre une prochaine navigation.
     _unreadCount = await compterMessagesNonLus();
     if (myToken !== renderToken) return;
+    var scrollBefore = opts.preserveScroll ? window.scrollY : 0;
     appEl().innerHTML = renderNav() + html + syncIndicatorHtml();
     if (view.screen === "map") setTimeout(initLeafletMap, 30);
     if (view.screen === "messagerie-conversation") { var msgThreadEl = $("message-thread"); if (msgThreadEl) msgThreadEl.scrollTop = msgThreadEl.scrollHeight; }
-    window.scrollTo(0, 0);
+    if (opts.preserveScroll) { window.scrollTo(0, scrollBefore); } else { window.scrollTo(0, 0); }
   }
 
   function renderNav() {
-    var links = "";
-    links += '<button data-nav="#/joueurs" class="' + (view.screen === "players" ? "active" : "") + '">' + tr("nav_players") + "</button>";
-    links += '<button data-nav="#/troupes" class="' + (view.screen === "troupes" ? "active" : "") + '">' + tr("nav_troupes") + "</button>";
-    links += '<button data-nav="#/spectacles" class="' + (view.screen === "spectacles" ? "active" : "") + '">' + tr("nav_spectacles") + "</button>";
-    links += '<button data-nav="#/carte" class="' + (view.screen === "map" ? "active" : "") + '">' + tr("nav_map") + "</button>";
+    // Groupe 1 : navigation de découverte du site (Improvisateurs, Troupes, Spectacles, Carte),
+    // rassemblée dans un même bloc visuel (façon "pilule") plutôt que des mots posés côte à côte.
+    var primary = "";
+    primary += '<button data-nav="#/joueurs" class="' + (view.screen === "players" ? "active" : "") + '">' + tr("nav_players") + "</button>";
+    primary += '<button data-nav="#/troupes" class="' + (view.screen === "troupes" ? "active" : "") + '">' + tr("nav_troupes") + "</button>";
+    primary += '<button data-nav="#/spectacles" class="' + (view.screen === "spectacles" ? "active" : "") + '">' + tr("nav_spectacles") + "</button>";
+    primary += '<button data-nav="#/carte" class="' + (view.screen === "map" ? "active" : "") + '">' + tr("nav_map") + "</button>";
+
+    // Groupe 2 : tout ce qui concerne le compte (fiche, messagerie, langue, connexion), séparé
+    // visuellement du groupe précédent pour que le menu se lise plus clairement.
+    var account = "";
     if (session) {
-      links += '<button data-nav="#/mon-profil" class="' + (view.screen === "my-profile" || view.screen === "my-profile-edit" ? "active" : "") + '">' + tr("nav_myprofile") + "</button>";
-      links += '<button id="nav-messagerie" data-nav="#/messagerie" class="icon-btn icon-btn-mail ' + (view.screen === "messagerie" || view.screen === "messagerie-conversation" ? "active" : "") + '" title="' + tr("nav_messagerie") + '" aria-label="' + tr("nav_messagerie") + '">' + ICON_MAIL_SVG +
+      account += '<button data-nav="#/mon-profil" class="nav-account-link ' + (view.screen === "my-profile" || view.screen === "my-profile-edit" ? "active" : "") + '">' + tr("nav_myprofile") + "</button>";
+      account += '<button id="nav-messagerie" data-nav="#/messagerie" class="icon-btn icon-btn-mail ' + (view.screen === "messagerie" || view.screen === "messagerie-conversation" ? "active" : "") + '" title="' + tr("nav_messagerie") + '" aria-label="' + tr("nav_messagerie") + '">' + ICON_MAIL_SVG +
         (_unreadCount > 0 ? '<span class="icon-badge">' + (_unreadCount > 9 ? "9+" : _unreadCount) + "</span>" : "") + "</button>";
     }
-    links += langSwitcherHtml();
+    account += langSwitcherHtml();
     if (session) {
-      links += '<button id="nav-logout" class="icon-btn icon-btn-red" title="' + tr("logout_title") + '" aria-label="' + tr("logout_title") + '">' + ICON_LOGOUT_SVG + "</button>";
+      account += '<button id="nav-logout" class="icon-btn icon-btn-red" title="' + tr("logout_title") + '" aria-label="' + tr("logout_title") + '">' + ICON_LOGOUT_SVG + "</button>";
     } else {
-      links += '<button data-nav="#/connexion" class="icon-btn icon-btn-green" title="' + tr("login_title") + '" aria-label="' + tr("login_title") + '">' + ICON_LOGIN_SVG + "</button>";
+      account += '<button data-nav="#/connexion" class="icon-btn icon-btn-green" title="' + tr("login_title") + '" aria-label="' + tr("login_title") + '">' + ICON_LOGIN_SVG + "</button>";
     }
     return (
       '<div class="top-nav">' +
-        '<button class="brand" data-nav="#/" style="background:none;border:none;padding:0;color:var(--text);cursor:pointer;">Passeport<span>Impro</span></button>' +
-        '<div class="nav-links">' + links + "</div>" +
+        '<button class="brand" data-nav="#/">' +
+          '<span class="brand-title">Passeport<span>Impro</span></span>' +
+          '<span class="brand-sub">by theatreimpro.com</span>' +
+        "</button>" +
+        '<div class="nav-groups">' +
+          '<nav class="nav-primary">' + primary + "</nav>" +
+          '<div class="nav-account">' + account + "</div>" +
+        "</div>" +
       "</div>"
     );
   }
@@ -1165,7 +1217,7 @@
         '<div class="profile-head">' +
           avatarHtml(profile.avatar_url, profile.pseudo, "avatar-xl") +
           "<div>" +
-            "<h2>" + esc(profile.nom_complet || profile.pseudo) + "</h2>" +
+            "<h2>" + esc(profile.nom_complet || profile.pseudo) + (profile.instagram ? ' <a href="' + esc(profile.instagram) + '" target="_blank" rel="noopener" class="instagram-badge" title="Instagram">📷</a>' : "") + "</h2>" +
             '<div class="profile-pseudo">@' + esc(profile.pseudo) + "</div>" +
             '<div class="profile-meta">' + (profile.ville ? "📍 " + esc(profile.ville) : "") + (profile.pays ? " " + esc(profile.pays) : "") + "</div>" +
             '<div class="level-pill">' + tr("level_label") + " " + lvl.level + " — " + esc(lvl.title) + "</div>" +
@@ -1914,6 +1966,8 @@
           '<label>Rôles joués</label><div>' + rolesHtml + "</div>" +
           '<label>Nombre de spectacles joués</label><input type="number" name="nb_spectacles" min="0" value="' + v("nb_spectacles") + '" style="max-width:140px;" autocomplete="off">' +
           '<label>Bio</label><textarea name="bio" rows="3" maxlength="600">' + v("bio") + "</textarea>" +
+          '<label>Instagram<span class="field-hint">Le lien s’affichera avec une icône en haut de ta fiche publique</span></label>' +
+          '<input type="url" name="instagram" placeholder="https://instagram.com/tonpseudo" value="' + v("instagram") + '" autocomplete="off">' +
           '<button type="submit" class="btn" style="margin-top:18px;">Enregistrer</button>' +
           (!isNew ? ' <button type="button" id="view-my-profile" class="btn-ghost">Voir ma fiche publique</button>' : "") +
         "</form>" +
@@ -1930,7 +1984,7 @@
     var videos = await fetchRelated("videos", "profile", p.id);
     var toutesTroupes = await fetchAllTroupes();
 
-    var troupeOptions = toutesTroupes.map(function (t) { return '<option value="' + esc(t.id) + '">' + esc(t.nom) + "</option>"; }).join("");
+    var troupeSuggestSource = jsonAttr(toutesTroupes.map(function (t) { return { value: t.nom, label: t.nom + (t.ville ? " — " + t.ville : ""), id: t.id }; }));
 
     var extraSections = (
       '<div class="card">' +
@@ -1943,7 +1997,8 @@
         (toutesTroupes.length ? (
           '<form class="add-form" data-kind="troupe-membre">' +
             '<div class="form-row">' +
-              '<select name="troupe_id" required><option value="">Choisir une troupe…</option>' + troupeOptions + "</select>" +
+              '<div class="suggest-wrap" style="flex:1;"><input type="text" name="troupe_nom" class="js-suggest" data-suggest-source="' + troupeSuggestSource + '" data-suggest-id-target="profile-troupe-membre-id" placeholder="Chercher une troupe…" required autocomplete="off"><div class="suggest-list" hidden></div></div>' +
+              '<input type="hidden" name="troupe_id" id="profile-troupe-membre-id">' +
             "</div>" +
             '<div class="form-row" style="margin-top:8px;">' +
               '<div><label style="margin:0 0 3px;">Date d’arrivée</label><input type="date" name="date_debut" autocomplete="off"></div>' +
@@ -1984,18 +2039,14 @@
           "</div>" +
         "</form>" +
 
-        '<div class="section-title">🔗 Liens (réseaux, site…)</div>' +
-        (p.liens || []).map(function (l, i) {
-          return '<div class="list-item"><div class="li-main"><a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a></div>' +
-            '<button class="remove-x" data-remove-lien="' + i + '">&times;</button></div>';
-        }).join("") +
-        '<form class="add-form" data-kind="lien">' +
-          '<div class="form-row">' +
-            '<input type="text" name="label" placeholder="Nom (ex: Instagram)" autocomplete="off">' +
-            '<input type="url" name="url" placeholder="https://…" required autocomplete="off">' +
-            '<button type="submit" class="btn btn-sm">Ajouter</button>' +
-          "</div>" +
-        "</form>" +
+        (p.liens && p.liens.length ? (
+          '<div class="section-title">🔗 Anciens liens</div>' +
+          '<p class="hint">Ces liens ont été ajoutés avant l’arrivée du champ Instagram ci-dessus. Tu peux les retirer si tu n’en as plus besoin.</p>' +
+          p.liens.map(function (l, i) {
+            return '<div class="list-item"><div class="li-main"><a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a></div>' +
+              '<button class="remove-x" data-remove-lien="' + i + '">&times;</button></div>';
+          }).join("")
+        ) : "") +
 
         '<div class="section-title">📸 Photos de spectacles</div>' +
         (photos.length ? '<div class="photo-gallery">' + photos.map(function (ph) {
@@ -2138,7 +2189,7 @@
       var id = removeBtn.getAttribute("data-id");
       await removeRelated(table, id);
       busy = false;
-      render();
+      render({ preserveScroll: true });
       return;
     }
     var rencontreDemanderBtn = e.target.closest("[data-rencontre-demander]");
@@ -2199,7 +2250,10 @@
         if (geoStatusEl) geoStatusEl.textContent = "Localisation en cours… " + done + " / " + total + " (déjà " + trouvees + " trouvée" + (trouvees > 1 ? "s" : "") + ")";
       });
       busy = false;
-      lastGeocodeSummary = geoResult.trouvees + " troupe" + (geoResult.trouvees > 1 ? "s localisées" : " localisée") + " sur " + geoResult.total + ".";
+      lastGeocodeSummary = geoResult.trouvees + " troupe" + (geoResult.trouvees > 1 ? "s localisées" : " localisée") + " sur " + geoResult.total + "." +
+        (geoResult.echecs.length ? " Impossible de localiser automatiquement : " + geoResult.echecs.map(function (t) {
+          return (t.nom || "(sans nom)") + " (" + ([t.ville, t.pays].filter(Boolean).join(", ") || "ville/pays vide") + ")";
+        }).join(" ; ") + " — vérifie l'orthographe de la ville et du pays sur ces fiches (ou dis-moi lesquelles, je peux regarder avec toi)." : "");
       render();
       return;
     }
@@ -2259,7 +2313,7 @@
       liens.splice(idx, 1);
       await saveMyProfile({ liens: liens });
       busy = false;
-      render();
+      render({ preserveScroll: true });
       return;
     }
   });
@@ -2376,7 +2430,8 @@
         disciplines: Array.prototype.slice.call(f.querySelectorAll('[name="disciplines"]:checked')).map(function (i) { return i.value; }),
         roles: Array.prototype.slice.call(f.querySelectorAll('[name="roles"]:checked')).map(function (i) { return i.value; }),
         nb_spectacles: f.nb_spectacles.value ? parseInt(f.nb_spectacles.value, 10) : 0,
-        bio: f.bio.value.trim()
+        bio: f.bio.value.trim(),
+        instagram: f.instagram.value.trim()
       };
       if (!/^[a-zA-Z0-9_\-.]{3,30}$/.test(fields.pseudo)) { errEl2.textContent = "Pseudo invalide (3 à 30 caractères, lettres/chiffres/_-. uniquement)."; return; }
       busy = true;
@@ -2496,8 +2551,10 @@
             date_fin: addForm.date_fin.value || null
           });
         } else if (kind === "troupe-membre") {
+          var tmTroupeId = addForm.troupe_id.value;
+          if (!tmTroupeId) { if (statusEl) statusEl.textContent = "Choisis une troupe dans la liste de suggestions."; busy = false; return; }
           await addRelated("troupe_membres", {
-            troupe_id: addForm.troupe_id.value, profile_id: myProfile.id,
+            troupe_id: tmTroupeId, profile_id: myProfile.id,
             date_debut: addForm.date_debut.value || null,
             date_fin: addForm.date_fin.value || null
           });
@@ -2575,7 +2632,7 @@
         if (statusEl) statusEl.textContent = "Une erreur est survenue.";
       }
       busy = false;
-      render();
+      render({ preserveScroll: true });
       return;
     }
 
