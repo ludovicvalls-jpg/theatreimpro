@@ -666,9 +666,26 @@
     var res = await supa.from("profiles").select("*").eq("pseudo", pseudo).maybeSingle();
     return res.data || null;
   }
+  // Supabase ne renvoie jamais plus de 1000 lignes d'un coup par défaut, même sans qu'on le
+  // demande : passé ce nombre, le reste est silencieusement absent de la réponse (pas d'erreur).
+  // Cette fonction redemande donc automatiquement la suite par tranches de 1000 tant qu'il y en
+  // a, pour que "toutes les X" (troupes, fiches, spectacles) soient vraiment toutes récupérées,
+  // quelle que soit la taille de l'annuaire.
+  async function fetchAllPages(queryBuilderFn) {
+    var pageSize = 1000;
+    var all = [];
+    var from = 0;
+    while (true) {
+      var res = await queryBuilderFn().range(from, from + pageSize - 1);
+      var rows = (res && res.data) || [];
+      all = all.concat(rows);
+      if (rows.length < pageSize) break;
+      from += pageSize;
+    }
+    return all;
+  }
   async function fetchAllProfiles() {
-    var res = await supa.from("profiles").select("*").order("created_at", { ascending: false });
-    return res.data || [];
+    return fetchAllPages(function () { return supa.from("profiles").select("*").order("created_at", { ascending: false }); });
   }
   async function saveMyProfile(fields) {
     fields.id = session.user.id;
@@ -680,8 +697,7 @@
 
   /* ================= Données : troupes ================= */
   async function fetchAllTroupes() {
-    var res = await supa.from("troupes").select("*").order("created_at", { ascending: false });
-    return res.data || [];
+    return fetchAllPages(function () { return supa.from("troupes").select("*").order("created_at", { ascending: false }); });
   }
   async function fetchTroupeById(id) {
     var res = await supa.from("troupes").select("*").eq("id", id).maybeSingle();
@@ -732,8 +748,7 @@
   // Tous les spectacles, toutes troupes confondues, avec les infos de la troupe (nom, position…)
   // rattachées — utilisé par la section "Prochains spectacles".
   async function fetchAllSpectacles() {
-    var res = await supa.from("spectacles").select("*, troupes(id, nom, ville, pays, latitude, longitude)").order("date_spectacle", { ascending: true });
-    return res.data || [];
+    return fetchAllPages(function () { return supa.from("spectacles").select("*, troupes(id, nom, ville, pays, latitude, longitude)").order("date_spectacle", { ascending: true }); });
   }
   async function fetchTroupesDuProfil(profileId) {
     var res = await supa.from("troupe_membres").select("*, troupes(id, nom, ville, pays)").eq("profile_id", profileId);
