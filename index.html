@@ -77,11 +77,18 @@
   .nav-links { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .nav-links button { background: none; border: none; color: var(--text-dim); padding: 6px 10px; font-size: 0.88rem; border-radius: 3px; }
   .nav-links button:hover, .nav-links button.active { color: var(--text); background: var(--surface); }
-  .nav-links .icon-btn { width: 34px; height: 34px; border-radius: 50%; padding: 0; display: inline-flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+  .nav-links .icon-btn { width: 34px; height: 34px; border-radius: 50%; padding: 0; display: inline-flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; position: relative; }
   .nav-links .icon-btn-green { background: #2e9e4f; }
   .nav-links .icon-btn-green:hover { background: #278a44; color: #fff; }
   .nav-links .icon-btn-red { background: #d92d3a; }
   .nav-links .icon-btn-red:hover { background: #b6222d; color: #fff; }
+  .nav-links .icon-btn-mail { background: #3a7bd5; }
+  .nav-links .icon-btn-mail:hover, .nav-links .icon-btn-mail.active { background: #2f66b3; color: #fff; }
+  .icon-badge {
+    position: absolute; top: -3px; right: -3px; background: var(--red); color: #fff;
+    border-radius: 50%; font-size: 0.62rem; line-height: 1; min-width: 16px; height: 16px;
+    display: flex; align-items: center; justify-content: center; padding: 0 3px; font-weight: 700;
+  }
   .lang-switch { display: flex; border: 1px solid var(--border); border-radius: 20px; overflow: hidden; flex-shrink: 0; }
   .lang-switch .lang-btn { background: none; border: none; color: var(--text-dim); padding: 5px 10px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.03em; border-radius: 0; }
   .lang-switch .lang-btn.active { background: var(--gold); color: #201804; }
@@ -236,6 +243,20 @@
   .country-tile .country-name { font-weight: 600; font-size: 0.85rem; text-align: center; }
   .country-tile .country-count { color: var(--text-dim); font-size: 0.78rem; }
 
+  .profile-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+  .rencontre-requests-box { background: var(--surface-dim); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 12px 0; }
+  .rencontres-avatars { display: flex; flex-wrap: wrap; gap: 8px; }
+  .rencontre-avatar-btn { background: none; border: none; padding: 0; cursor: pointer; border-radius: 50%; line-height: 0; }
+  .rencontre-avatar-btn:hover .avatar { outline: 2px solid var(--gold); }
+  .msg-badge {
+    display: inline-flex; align-items: center; justify-content: center; background: var(--red); color: #fff;
+    border-radius: 50%; min-width: 18px; height: 18px; font-size: 0.7rem; padding: 0 4px; margin-left: 4px; font-weight: 700;
+  }
+  .message-thread { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; padding: 4px 2px; }
+  .message-bubble { max-width: 75%; padding: 8px 12px; border-radius: 14px; word-break: break-word; }
+  .message-mine { align-self: flex-end; background: var(--gold); color: #201804; }
+  .message-other { align-self: flex-start; background: var(--surface-dim); border: 1px solid var(--border); }
+
   .spectacle-troupe { font-size: 0.85rem; margin: -2px 0 4px; }
   .spectacle-troupe a { color: var(--text); text-decoration: underline; }
   .spectacle-list-grid { display: flex; flex-direction: column; }
@@ -333,6 +354,7 @@
   var I18N = {
     fr: {
       nav_players: "Improvisateurs", nav_troupes: "Troupes", nav_spectacles: "Prochains spectacles", nav_map: "Carte", nav_myprofile: "Mon passeport",
+      nav_messagerie: "Messagerie",
       login_title: "Connexion", logout_title: "Déconnexion",
       loading: "Chargement…", redirecting: "Redirection…",
       hero_title_html: "Le <span>Passeport</span> de l’improvisateur·rice",
@@ -373,9 +395,21 @@
       impro_since_prefix: "🎭 Impro depuis ", impro_since_suffix: " ans)",
       roles_label: "🎬 Rôles : ", mentor_label: "🧑‍🏫 Mentor : ", disciplines_label: "🎪 Disciplines : ",
       section_my_troupes: "👥 Troupes", section_links: "🔗 Liens",
+      section_rencontres: "🤝 A déjà joué avec", rencontres_count_plural: " personnes rencontrées", rencontres_count_singular: " personne rencontrée",
+      rencontre_btn_add: "🤝 On a déjà joué ensemble", rencontre_btn_pending_sent: "⏳ Demande envoyée, en attente de validation.",
+      rencontre_pending_received_label: "🤝 Cette personne dit avoir déjà joué avec toi :",
+      rencontre_accept_btn: "✅ Accepter", rencontre_refuse_btn: "❌ Refuser",
+      rencontre_confirmed_label: "✅ Vous avez déjà joué ensemble", rencontre_remove_link: "Retirer",
+      demandes_recues_title: "📩 Demandes de rencontre en attente",
+      messagerie_write_to_btn: "✉️ Envoyer un message",
+      messagerie_title: "✉️ Messagerie", messagerie_empty: "Aucune conversation pour l’instant.",
+      messagerie_conversation_empty: "Aucun message pour l’instant — écris le premier !",
+      messagerie_placeholder: "Écris ton message…", messagerie_send_btn: "Envoyer",
+      back_to_messagerie: "&larr; Retour à la messagerie",
       badge_spectacles50: "50 spectacles", badge_etranger: "Une expérience à l’étranger", badge_stagiaire_assidu: "3 stages suivis",
       badge_mc: "Maître·sse de cérémonie", badge_arbitre: "Arbitre", badge_coach: "Coach",
       badge_dix_equipes: "10 équipes rencontrées", badge_dix_ans: "10 ans d’impro", badge_trois_troupes: "3 troupes ou plus", badge_polyvalent: "Touche-à-tout (3 rôles)",
+      badge_dresseur: "Dresseur pokéimprovisateur (10 rencontres)",
       map_title: "🗺️ Où sont les troupes ?", map_hint: "Les troupes sont placées d’après leur ville — la position est approximative.",
       map_popup_view: "Voir la fiche",
       spectacles_title: "🎭 Prochains spectacles", spectacles_city_label: "Ta ville", spectacles_city_placeholder: "Ex. Montpellier",
@@ -390,6 +424,7 @@
     },
     en: {
       nav_players: "Improvisers", nav_troupes: "Troupes", nav_spectacles: "Upcoming shows", nav_map: "Map", nav_myprofile: "My passport",
+      nav_messagerie: "Messages",
       login_title: "Log in", logout_title: "Log out",
       loading: "Loading…", redirecting: "Redirecting…",
       hero_title_html: "The Improviser’s <span>Passport</span>",
@@ -430,9 +465,21 @@
       impro_since_prefix: "🎭 Improvising since ", impro_since_suffix: " years)",
       roles_label: "🎬 Roles: ", mentor_label: "🧑‍🏫 Mentor: ", disciplines_label: "🎪 Disciplines: ",
       section_my_troupes: "👥 Troupes", section_links: "🔗 Links",
+      section_rencontres: "🤝 Played with", rencontres_count_plural: " people met", rencontres_count_singular: " person met",
+      rencontre_btn_add: "🤝 We’ve already played together", rencontre_btn_pending_sent: "⏳ Request sent, waiting for confirmation.",
+      rencontre_pending_received_label: "🤝 This person says you’ve already played together:",
+      rencontre_accept_btn: "✅ Accept", rencontre_refuse_btn: "❌ Decline",
+      rencontre_confirmed_label: "✅ You’ve played together", rencontre_remove_link: "Remove",
+      demandes_recues_title: "📩 Pending meeting requests",
+      messagerie_write_to_btn: "✉️ Send a message",
+      messagerie_title: "✉️ Messages", messagerie_empty: "No conversations yet.",
+      messagerie_conversation_empty: "No messages yet — write the first one!",
+      messagerie_placeholder: "Write your message…", messagerie_send_btn: "Send",
+      back_to_messagerie: "&larr; Back to messages",
       badge_spectacles50: "50 shows", badge_etranger: "International experience", badge_stagiaire_assidu: "3 workshops attended",
       badge_mc: "Master of ceremonies", badge_arbitre: "Referee", badge_coach: "Coach",
       badge_dix_equipes: "10 teams met", badge_dix_ans: "10 years of impro", badge_trois_troupes: "3 troupes or more", badge_polyvalent: "All-rounder (3 roles)",
+      badge_dresseur: "Pokéimprov trainer (10 encounters)",
       map_title: "🗺️ Where are the troupes?", map_hint: "Troupes are placed based on their city — the position is approximate.",
       map_popup_view: "View profile",
       spectacles_title: "🎭 Upcoming shows", spectacles_city_label: "Your city", spectacles_city_placeholder: "E.g. Montpellier",
@@ -463,6 +510,7 @@
   }
   var ICON_LOGIN_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9-4h-8v2h8v14h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>';
   var ICON_LOGOUT_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>';
+  var ICON_MAIL_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>';
 
   /* ================= État ================= */
   var session = null;
@@ -473,6 +521,7 @@
   var _troupesAll = [];
   var _spectaclesAll = [];
   var _troupesSelectedCountry = null;
+  var _unreadCount = 0;
   var lastGeocodeSummary = "";
   var busy = false;
 
@@ -678,6 +727,82 @@
     if (res.error) return { error: res.error.message };
     return { ok: true };
   }
+  async function fetchProfileById(id) {
+    var res = await supa.from("profiles").select("*").eq("id", id).maybeSingle();
+    return res.data || null;
+  }
+
+  /* ================= Données : "J'ai déjà joué avec" (rencontres entre joueurs) =================
+     Une seule ligne par paire de joueurs, avec un statut "en_attente" (proposé par le
+     "demandeur", à valider par le "destinataire") ou "accepte" (confirmé des deux côtés).
+     Comme on ne sait pas à l'avance qui, des deux, est le demandeur, chercher une relation
+     entre deux personnes précises demande de vérifier les deux sens séparément. */
+  async function fetchRencontreEntre(idA, idB) {
+    var r1 = await supa.from("rencontres_joueurs").select("*").eq("demandeur_id", idA).eq("destinataire_id", idB).maybeSingle();
+    if (r1.data) return r1.data;
+    var r2 = await supa.from("rencontres_joueurs").select("*").eq("demandeur_id", idB).eq("destinataire_id", idA).maybeSingle();
+    return r2.data || null;
+  }
+  // Rencontres CONFIRMÉES d'un profil (dans les deux sens), avec les fiches des personnes rencontrées.
+  async function fetchRencontresConfirmees(profileId) {
+    var commeDemandeur = await supa.from("rencontres_joueurs").select("*").eq("demandeur_id", profileId).eq("statut", "accepte");
+    var commeDestinataire = await supa.from("rencontres_joueurs").select("*").eq("destinataire_id", profileId).eq("statut", "accepte");
+    var lignes = (commeDemandeur.data || []).concat(commeDestinataire.data || []);
+    var autresIds = lignes.map(function (l) { return l.demandeur_id === profileId ? l.destinataire_id : l.demandeur_id; });
+    var profils = await fetchAllProfiles();
+    return autresIds.map(function (id) { return profils.filter(function (p) { return p.id === id; })[0]; }).filter(Boolean);
+  }
+  // Demandes de rencontre reçues par ce profil et pas encore traitées (à accepter ou refuser).
+  async function fetchDemandesRecues(profileId) {
+    var res = await supa.from("rencontres_joueurs").select("*").eq("destinataire_id", profileId).eq("statut", "en_attente");
+    var lignes = res.data || [];
+    var profils = await fetchAllProfiles();
+    return lignes.map(function (l) {
+      var p = profils.filter(function (x) { return x.id === l.demandeur_id; })[0];
+      return p ? Object.assign({}, l, { profile: p }) : null;
+    }).filter(Boolean);
+  }
+
+  /* ================= Données : messagerie simple entre joueurs ================= */
+  // Tous les messages échangés avec une personne précise, triés du plus ancien au plus récent.
+  async function fetchConversation(autreId) {
+    var envoyes = await supa.from("messages").select("*").eq("expediteur_id", session.user.id).eq("destinataire_id", autreId);
+    var recus = await supa.from("messages").select("*").eq("expediteur_id", autreId).eq("destinataire_id", session.user.id);
+    var tous = (envoyes.data || []).concat(recus.data || []);
+    tous.sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
+    return tous;
+  }
+  // Une entrée par correspondant·e (avec le dernier message et le nombre de messages non lus
+  // reçus de cette personne), triée du dernier message le plus récent au plus ancien.
+  async function fetchConversations() {
+    var envoyes = await supa.from("messages").select("*").eq("expediteur_id", session.user.id);
+    var recus = await supa.from("messages").select("*").eq("destinataire_id", session.user.id);
+    var tous = (envoyes.data || []).concat(recus.data || []);
+    var dernierParPersonne = {};
+    var nonLusParPersonne = {};
+    tous.forEach(function (m) {
+      var autreId = m.expediteur_id === session.user.id ? m.destinataire_id : m.expediteur_id;
+      if (!dernierParPersonne[autreId] || new Date(m.created_at) > new Date(dernierParPersonne[autreId].created_at)) dernierParPersonne[autreId] = m;
+      if (m.destinataire_id === session.user.id && !m.lu) nonLusParPersonne[autreId] = (nonLusParPersonne[autreId] || 0) + 1;
+    });
+    var profils = await fetchAllProfiles();
+    return Object.keys(dernierParPersonne).map(function (autreId) {
+      var p = profils.filter(function (x) { return x.id === autreId; })[0];
+      if (!p) return null;
+      return { profile: p, dernierMessage: dernierParPersonne[autreId], nonLus: nonLusParPersonne[autreId] || 0 };
+    }).filter(Boolean).sort(function (a, b) { return new Date(b.dernierMessage.created_at) - new Date(a.dernierMessage.created_at); });
+  }
+  async function envoyerMessage(destinataireId, contenu) {
+    return await addRelated("messages", { expediteur_id: session.user.id, destinataire_id: destinataireId, contenu: contenu, lu: false });
+  }
+  async function marquerConversationLue(autreId) {
+    return await supa.from("messages").update({ lu: true }).eq("destinataire_id", session.user.id).eq("expediteur_id", autreId);
+  }
+  async function compterMessagesNonLus() {
+    if (!session) return 0;
+    var res = await supa.from("messages").select("*").eq("destinataire_id", session.user.id);
+    return (res.data || []).filter(function (m) { return !m.lu; }).length;
+  }
   /* ================= Géocodage (adresse/ville/pays -> coordonnées, pour la carte) ================= */
   async function geocodeQuery(q) {
     if (!q) return null;
@@ -784,7 +909,8 @@
     { key: "dix_equipes", emoji: "⚔️", label: "10 équipes rencontrées", test: function (p, s) { return s.equipesCount >= 10; } },
     { key: "dix_ans", emoji: "👑", label: "10 ans d’impro", test: function (p, s) { return p.annee_debut_impro && (currentYear() - p.annee_debut_impro) >= 10; } },
     { key: "trois_troupes", emoji: "👥", label: "3 troupes ou plus", test: function (p, s) { return s.troupesCount >= 3; } },
-    { key: "polyvalent", emoji: "🎭", label: "Touche-à-tout (3 rôles)", test: function (p, s) { return (p.roles || []).length >= 3; } }
+    { key: "polyvalent", emoji: "🎭", label: "Touche-à-tout (3 rôles)", test: function (p, s) { return (p.roles || []).length >= 3; } },
+    { key: "dresseur", emoji: "🎒", label: "Dresseur pokéimprovisateur", test: function (p, s) { return (s.rencontresCount || 0) >= 10; } }
   ];
   function computeBadges(profile, s) {
     return BADGE_DEFS.filter(function (b) { return b.test(profile, s); });
@@ -816,6 +942,8 @@
     if (parts[0] === "troupe" && parts[1]) return { screen: "troupe", id: parts[1] };
     if (parts[0] === "spectacles") return { screen: "spectacles" };
     if (parts[0] === "carte") return { screen: "map" };
+    if (parts[0] === "messagerie" && parts[1]) return { screen: "messagerie-conversation", id: parts[1] };
+    if (parts[0] === "messagerie") return { screen: "messagerie" };
     return { screen: "home" };
   }
   function route() { view = parseHash(); render(); }
@@ -823,6 +951,7 @@
   var renderToken = 0;
   async function render() {
     var myToken = ++renderToken;
+    _unreadCount = await compterMessagesNonLus();
     appEl().innerHTML = renderNav() + '<p class="hint">' + tr("loading") + "</p>";
     var html = "";
     try {
@@ -838,6 +967,8 @@
         case "troupe-edit": html = await renderTroupeEdit(view.id); break;
         case "spectacles": html = await renderSpectacles(); break;
         case "map": html = await renderMapScreen(); break;
+        case "messagerie": html = await renderMessagerieInbox(); break;
+        case "messagerie-conversation": html = await renderMessagerieConversation(view.id); break;
         default: html = renderHome();
       }
     } catch (e) {
@@ -845,8 +976,14 @@
       html = '<div class="card"><p class="error-msg">' + tr("generic_error") + "</p></div>";
     }
     if (myToken !== renderToken) return; // une navigation plus récente a eu lieu entre temps
+    // Recalculé après le rendu de la page (et pas seulement avant) : ouvrir une conversation
+    // marque ses messages comme lus, ce qui doit se refléter tout de suite sur le petit badge
+    // du menu, sans attendre une prochaine navigation.
+    _unreadCount = await compterMessagesNonLus();
+    if (myToken !== renderToken) return;
     appEl().innerHTML = renderNav() + html + syncIndicatorHtml();
     if (view.screen === "map") setTimeout(initLeafletMap, 30);
+    if (view.screen === "messagerie-conversation") { var msgThreadEl = $("message-thread"); if (msgThreadEl) msgThreadEl.scrollTop = msgThreadEl.scrollHeight; }
     window.scrollTo(0, 0);
   }
 
@@ -858,6 +995,8 @@
     links += '<button data-nav="#/carte" class="' + (view.screen === "map" ? "active" : "") + '">' + tr("nav_map") + "</button>";
     if (session) {
       links += '<button data-nav="#/mon-profil" class="' + (view.screen === "my-profile" || view.screen === "my-profile-edit" ? "active" : "") + '">' + tr("nav_myprofile") + "</button>";
+      links += '<button id="nav-messagerie" data-nav="#/messagerie" class="icon-btn icon-btn-mail ' + (view.screen === "messagerie" || view.screen === "messagerie-conversation" ? "active" : "") + '" title="' + tr("nav_messagerie") + '" aria-label="' + tr("nav_messagerie") + '">' + ICON_MAIL_SVG +
+        (_unreadCount > 0 ? '<span class="icon-badge">' + (_unreadCount > 9 ? "9+" : _unreadCount) + "</span>" : "") + "</button>";
     }
     links += langSwitcherHtml();
     if (session) {
@@ -985,9 +1124,15 @@
     var photos = await fetchRelated("photos", "profile", profile.id);
     var videos = await fetchRelated("videos", "profile", profile.id);
     var troupesLiees = await fetchTroupesDuProfil(profile.id);
+    var rencontresConfirmees = await fetchRencontresConfirmees(profile.id);
+    var demandesRecues = isOwner ? await fetchDemandesRecues(profile.id) : [];
+
+    // Relation ("j'ai déjà joué avec") entre la personne connectée et cette fiche, si ce n'est
+    // pas sa propre fiche — utilisée pour proposer le bon bouton (proposer / en attente / accepter).
+    var relationAvecMoi = (session && !isOwner) ? await fetchRencontreEntre(session.user.id, profile.id) : null;
 
     var paysJoues = uniqueList(stages.map(function (t) { return t.pays; }).filter(Boolean).concat(profile.pays ? [profile.pays] : []));
-    var stats = { stagesCount: stages.length, paysCount: paysJoues.length, equipesCount: equipes.length, troupesCount: troupesLiees.length };
+    var stats = { stagesCount: stages.length, paysCount: paysJoues.length, equipesCount: equipes.length, troupesCount: troupesLiees.length, rencontresCount: rencontresConfirmees.length };
     var score = computeScore(profile, stats);
     var lvl = computeLevel(score);
     var badges = computeBadges(profile, stats);
@@ -997,6 +1142,21 @@
       var d = ROLES.filter(function (x) { return x.key === r; })[0];
       return d ? d.label : r;
     }).join(", ");
+
+    // Bouton/statut "j'ai déjà joué avec" à afficher en haut de la fiche d'une autre personne.
+    var rencontreActionHtml = "";
+    if (session && !isOwner) {
+      if (!relationAvecMoi) {
+        rencontreActionHtml = '<button class="btn-ghost btn-sm" data-rencontre-demander="' + esc(profile.id) + '">' + tr("rencontre_btn_add") + "</button>";
+      } else if (relationAvecMoi.statut === "accepte") {
+        rencontreActionHtml = '<span class="hint">' + tr("rencontre_confirmed_label") + '</span> <button class="btn-link" data-rencontre-retirer="' + esc(relationAvecMoi.id) + '">' + tr("rencontre_remove_link") + "</button>";
+      } else if (relationAvecMoi.demandeur_id === session.user.id) {
+        rencontreActionHtml = '<span class="hint">' + tr("rencontre_btn_pending_sent") + "</span>";
+      } else {
+        rencontreActionHtml = '<span class="hint">' + tr("rencontre_pending_received_label") + '</span> <button class="btn btn-sm" data-rencontre-accepter="' + esc(relationAvecMoi.id) + '">' + tr("rencontre_accept_btn") + '</button> <button class="btn-ghost btn-sm" data-rencontre-refuser="' + esc(relationAvecMoi.id) + '">' + tr("rencontre_refuse_btn") + "</button>";
+      }
+    }
+    var messageBtnHtml = (session && !isOwner) ? '<button class="btn-ghost btn-sm" data-nav="#/messagerie/' + esc(profile.id) + '">' + tr("messagerie_write_to_btn") + "</button>" : "";
 
     return (
       '<button class="back-btn" data-nav="#/joueurs">' + tr("back_to_players") + "</button>" +
@@ -1012,6 +1172,26 @@
           "</div>" +
           (isOwner ? '<button class="btn-ghost btn-sm" data-nav="#/mon-profil/modifier" style="margin-left:auto;">' + tr("btn_modify") + "</button>" : "") +
         "</div>" +
+
+        ((rencontreActionHtml || messageBtnHtml) ? '<div class="profile-actions">' + rencontreActionHtml + messageBtnHtml + "</div>" : "") +
+
+        (demandesRecues.length ? (
+          '<div class="rencontre-requests-box">' +
+            '<p class="hint" style="margin:0 0 8px;font-weight:600;">' + tr("demandes_recues_title") + "</p>" +
+            demandesRecues.map(function (d) {
+              return (
+                '<div class="list-item"><div class="li-main" style="display:flex;align-items:center;gap:10px;">' +
+                  avatarHtml(d.profile.avatar_url, d.profile.pseudo, "avatar-sm") +
+                  '<button class="btn-link li-title" data-nav="#/profil/' + esc(d.profile.pseudo) + '" style="text-decoration:none;color:var(--text);">' + esc(d.profile.nom_complet || d.profile.pseudo) + "</button>" +
+                  '<span style="margin-left:auto;display:flex;gap:6px;">' +
+                    '<button class="btn btn-sm" data-rencontre-accepter="' + esc(d.id) + '">' + tr("rencontre_accept_btn") + "</button>" +
+                    '<button class="btn-ghost btn-sm" data-rencontre-refuser="' + esc(d.id) + '">' + tr("rencontre_refuse_btn") + "</button>" +
+                  "</span>" +
+                "</div></div>"
+              );
+            }).join("") +
+          "</div>"
+        ) : "") +
 
         '<div class="stat-row">' +
           statBox(profile.nb_spectacles || 0, tr("stat_shows")) +
@@ -1044,6 +1224,16 @@
               "</div></div>"
             );
           }).join("")
+        ) : "") +
+
+        (rencontresConfirmees.length ? (
+          '<div class="section-title">' + tr("section_rencontres") + "</div>" +
+          '<p class="hint" style="margin:0 0 8px;">' + rencontresConfirmees.length + (rencontresConfirmees.length > 1 ? tr("rencontres_count_plural") : tr("rencontres_count_singular")) + "</p>" +
+          '<div class="rencontres-avatars">' +
+            rencontresConfirmees.map(function (p) {
+              return '<button class="rencontre-avatar-btn" data-nav="#/profil/' + esc(p.pseudo) + '" title="' + esc(p.nom_complet || p.pseudo) + '">' + avatarHtml(p.avatar_url, p.pseudo, "avatar-md") + "</button>";
+            }).join("") +
+          "</div>"
         ) : "") +
 
         (stages.length ? (
@@ -1086,6 +1276,54 @@
   }
   function statBox(num, label) { return '<div class="stat-box"><span class="num">' + num + '</span><span class="lbl">' + esc(label) + "</span></div>"; }
   function uniqueList(arr) { var seen = {}, out = []; arr.forEach(function (x) { if (x && !seen[x]) { seen[x] = 1; out.push(x); } }); return out; }
+
+  /* ================= Messagerie simple entre joueurs ================= */
+  async function renderMessagerieInbox() {
+    if (!session) { setHash("#/connexion"); return '<p class="hint">' + tr("redirecting") + "</p>"; }
+    var conversations = await fetchConversations();
+    return (
+      "<h2>" + tr("messagerie_title") + "</h2>" +
+      (conversations.length ? '<div class="directory-list">' + conversations.map(function (c) {
+        var extrait = (c.dernierMessage.contenu || "");
+        if (extrait.length > 60) extrait = extrait.slice(0, 60) + "…";
+        return (
+          '<button class="directory-row" data-nav="#/messagerie/' + esc(c.profile.id) + '">' +
+            avatarHtml(c.profile.avatar_url, c.profile.pseudo, "avatar-md") +
+            '<span><span class="dr-name">' + esc(c.profile.nom_complet || c.profile.pseudo) +
+              (c.nonLus > 0 ? ' <span class="msg-badge">' + c.nonLus + "</span>" : "") + '</span><br>' +
+            '<span class="dr-sub">' + esc(extrait) + "</span></span>" +
+          "</button>"
+        );
+      }).join("") + "</div>" : '<p class="empty-hint">' + tr("messagerie_empty") + "</p>")
+    );
+  }
+  async function renderMessagerieConversation(autreId) {
+    if (!session) { setHash("#/connexion"); return '<p class="hint">' + tr("redirecting") + "</p>"; }
+    var autre = await fetchProfileById(autreId);
+    if (!autre) return '<div class="card"><p>' + tr("profile_not_found") + "</p></div>";
+    await marquerConversationLue(autreId);
+    var messages = await fetchConversation(autreId);
+    return (
+      '<button class="back-btn" data-nav="#/messagerie">' + tr("back_to_messagerie") + "</button>" +
+      '<div class="card">' +
+        '<div class="profile-head" style="margin-bottom:14px;">' +
+          avatarHtml(autre.avatar_url, autre.pseudo, "avatar-md") +
+          '<div><button class="btn-link li-title" data-nav="#/profil/' + esc(autre.pseudo) + '" style="text-decoration:none;color:var(--text);">' + esc(autre.nom_complet || autre.pseudo) + "</button></div>" +
+        "</div>" +
+        '<div class="message-thread" id="message-thread">' +
+          (messages.length ? messages.map(function (m) {
+            var mien = m.expediteur_id === session.user.id;
+            return '<div class="message-bubble ' + (mien ? "message-mine" : "message-other") + '">' + esc(m.contenu).replace(/\n/g, "<br>") + "</div>";
+          }).join("") : '<p class="empty-hint">' + tr("messagerie_conversation_empty") + "</p>") +
+        "</div>" +
+        '<form id="message-form" data-destinataire="' + esc(autreId) + '" style="margin-top:14px;display:flex;gap:8px;">' +
+          '<input type="text" name="contenu" placeholder="' + tr("messagerie_placeholder") + '" autocomplete="off" required style="flex:1;">' +
+          '<button type="submit" class="btn">' + tr("messagerie_send_btn") + "</button>" +
+        "</form>" +
+      "</div>"
+    );
+  }
+
   /* ================= Annuaire des troupes ================= */
   async function renderTroupes() {
     var troupes = await fetchAllTroupes();
@@ -1903,6 +2141,42 @@
       render();
       return;
     }
+    var rencontreDemanderBtn = e.target.closest("[data-rencontre-demander]");
+    if (rencontreDemanderBtn) {
+      if (busy || !session) return;
+      busy = true;
+      await addRelated("rencontres_joueurs", { demandeur_id: session.user.id, destinataire_id: rencontreDemanderBtn.getAttribute("data-rencontre-demander"), statut: "en_attente" });
+      busy = false;
+      render();
+      return;
+    }
+    var rencontreAccepterBtn = e.target.closest("[data-rencontre-accepter]");
+    if (rencontreAccepterBtn) {
+      if (busy) return;
+      busy = true;
+      await updateRelated("rencontres_joueurs", rencontreAccepterBtn.getAttribute("data-rencontre-accepter"), { statut: "accepte" });
+      busy = false;
+      render();
+      return;
+    }
+    var rencontreRefuserBtn = e.target.closest("[data-rencontre-refuser]");
+    if (rencontreRefuserBtn) {
+      if (busy) return;
+      busy = true;
+      await removeRelated("rencontres_joueurs", rencontreRefuserBtn.getAttribute("data-rencontre-refuser"));
+      busy = false;
+      render();
+      return;
+    }
+    var rencontreRetirerBtn = e.target.closest("[data-rencontre-retirer]");
+    if (rencontreRetirerBtn) {
+      if (busy) return;
+      busy = true;
+      await removeRelated("rencontres_joueurs", rencontreRetirerBtn.getAttribute("data-rencontre-retirer"));
+      busy = false;
+      render();
+      return;
+    }
     var confirmDeleteTroupeBtn = e.target.closest("#confirm-delete-troupe");
     if (confirmDeleteTroupeBtn) {
       if (busy) return;
@@ -2348,6 +2622,19 @@
         ? sfNearby.length + (sfNearby.length > 1 ? " shows found" : " show found") + " within " + rayonQ + " km of “" + villeQ + "”."
         : sfNearby.length + (sfNearby.length > 1 ? " spectacles trouvés" : " spectacle trouvé") + " à moins de " + rayonQ + " km de « " + villeQ + " ».";
       if (sfResetBtn) sfResetBtn.hidden = false;
+      return;
+    }
+
+    if (e.target.id === "message-form") {
+      e.preventDefault();
+      var msgForm = e.target;
+      var contenuMsg = msgForm.contenu.value.trim();
+      if (!contenuMsg) return;
+      if (busy) return;
+      busy = true;
+      await envoyerMessage(msgForm.getAttribute("data-destinataire"), contenuMsg);
+      busy = false;
+      render();
       return;
     }
   });
