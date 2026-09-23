@@ -65,6 +65,10 @@
   .btn-sm { padding: 6px 12px; font-size: 0.82rem; }
   .btn-danger { background: none; border: 1px solid var(--curtain); color: var(--curtain); padding: 6px 12px; border-radius: 3px; font-size: 0.82rem; }
   .btn-danger:hover { background: var(--curtain); color: #fff; }
+  /* Bouton "Enregistrer" des fiches (troupe, passeport) : vert et bien visible, pour qu'il ne
+     passe pas inaperçu au milieu des autres boutons de la page. */
+  .btn-save { background: #2e9e4f; }
+  .btn-save:hover { background: #278a44; }
   .btn-red { background: var(--red); color: #fff; border: none; font-weight: 700; padding: 9px 16px; border-radius: 3px; font-size: 0.85rem; }
   .btn-red:hover { background: var(--red-strong); }
 
@@ -1834,7 +1838,7 @@
           "</div>" +
           '<label>Logo<span class="field-hint">Format image, 1 Mo maximum</span></label><input type="file" id="troupe-logo-input" accept="image/*">' +
           '<label>Ou un lien direct vers une image</label><input type="url" id="troupe-logo-url-input" placeholder="https://…" autocomplete="off">' +
-          '<button type="submit" class="btn" style="margin-top:18px;">Enregistrer</button>' +
+          '<button type="submit" class="btn btn-save" style="margin-top:18px;">✓ Enregistrer</button>' +
         "</form>" +
         '<p id="troupe-form-error" class="error-msg"></p>' +
       "</div>" +
@@ -1890,11 +1894,22 @@
 
   /* ================= Carte du monde ================= */
   var leafletMap = null;
+  var leafletMarkersByTroupeId = {};
   async function renderMapScreen() {
     var isAdmin = !!(myProfile && myProfile.is_admin);
+    var allTroupesForSearch = await fetchAllTroupes();
+    var troupesAvecPosition = allTroupesForSearch.filter(function (t) { return t.latitude != null && t.longitude != null; });
+    var mapSearchSource = jsonAttr(troupesAvecPosition.map(function (t) { return { value: t.nom, label: t.nom + (t.ville ? " — " + t.ville : ""), id: t.id }; }));
+    var mapSearchHtml = (
+      '<div class="suggest-wrap" style="max-width:360px;margin-bottom:12px;">' +
+        '<input type="text" id="map-search-input" class="js-suggest" data-suggest-source="' + mapSearchSource + '" data-suggest-id-target="map-search-troupe-id" placeholder="🔎 Chercher une troupe sur la carte…" autocomplete="off">' +
+        '<div class="suggest-list" hidden></div>' +
+      "</div>" +
+      '<input type="hidden" id="map-search-troupe-id">'
+    );
     var adminToolHtml = "";
     if (isAdmin) {
-      var troupes = await fetchAllTroupes();
+      var troupes = allTroupesForSearch;
       var manquantes = troupesSansPosition(troupes);
       var summaryHtml = lastGeocodeSummary ? '<p class="hint" style="margin-top:8px;">' + esc(lastGeocodeSummary) + "</p>" : "";
       lastGeocodeSummary = "";
@@ -1911,7 +1926,7 @@
         adminToolHtml = '<div class="card" style="margin-top:14px;">' + summaryHtml + "</div>";
       }
     }
-    return '<h2>' + tr("map_title") + '</h2><div id="map-container"></div><p class="hint" style="margin-top:8px;">' + tr("map_hint") + '</p>' + adminToolHtml;
+    return '<h2>' + tr("map_title") + '</h2>' + mapSearchHtml + '<div id="map-container"></div><p class="hint" style="margin-top:8px;">' + tr("map_hint") + '</p>' + adminToolHtml;
   }
   async function initLeafletMap() {
     var el = $("map-container");
@@ -1921,16 +1936,26 @@
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap"
     }).addTo(leafletMap);
+    leafletMarkersByTroupeId = {};
     var troupes = await fetchAllTroupes();
     var withCoords = troupes.filter(function (t) { return t.latitude != null && t.longitude != null; });
     withCoords.forEach(function (t) {
       var marker = L.marker([t.latitude, t.longitude]).addTo(leafletMap);
       marker.bindPopup('<div class="map-popup"><strong>' + esc(t.nom) + "</strong><br>" + esc(t.ville || "") + "<br><a href=\"#/troupe/" + esc(t.id) + "\">" + tr("map_popup_view") + "</a></div>");
+      leafletMarkersByTroupeId[t.id] = marker;
     });
     if (withCoords.length) {
       var bounds = L.latLngBounds(withCoords.map(function (t) { return [t.latitude, t.longitude]; }));
       leafletMap.fitBounds(bounds.pad(0.3));
     }
+  }
+  // Zoome directement sur la troupe choisie dans le champ de recherche de l'onglet Carte, et
+  // ouvre sa bulle d'info — comme si on avait cliqué sur son point à la main.
+  function zoomSurTroupe(troupeId) {
+    var marker = leafletMarkersByTroupeId[troupeId];
+    if (!leafletMap || !marker) return;
+    leafletMap.setView(marker.getLatLng(), 13);
+    marker.openPopup();
   }
   /* ================= Mon passeport (redirection vers la fiche publique, ou création) ================= */
   async function renderMyProfileScreen() {
@@ -1991,7 +2016,7 @@
           '<label>Bio</label><textarea name="bio" rows="3" maxlength="600">' + v("bio") + "</textarea>" +
           '<label>Instagram<span class="field-hint">Le lien s’affichera avec une icône en haut de ta fiche publique</span></label>' +
           '<input type="url" name="instagram" placeholder="https://instagram.com/tonpseudo" value="' + v("instagram") + '" autocomplete="off">' +
-          '<button type="submit" class="btn" style="margin-top:18px;">Enregistrer</button>' +
+          '<button type="submit" class="btn btn-save" style="margin-top:18px;">✓ Enregistrer</button>' +
           (!isNew ? ' <button type="button" id="view-my-profile" class="btn-ghost">Voir ma fiche publique</button>' : "") +
         "</form>" +
         '<p id="profile-form-error" class="error-msg"></p>' +
@@ -2111,9 +2136,29 @@
   function closeLightbox() { var el = $("lightbox"); if (el) el.remove(); }
 
   /* ================= Événements ================= */
+  // Repère si les champs principaux d'une fiche (troupe ou passeport) ont été modifiés sans être
+  // enregistrés, pour éviter de perdre ces changements en cliquant sur "Retour" ou un lien du menu
+  // par mégarde — Drawer a signalé perdre ses modifications de cette façon.
+  var formDirty = false;
+  document.addEventListener("input", function (e) {
+    if (e.target.closest && (e.target.closest("#troupe-form") || e.target.closest("#profile-form"))) formDirty = true;
+  });
+  document.addEventListener("change", function (e) {
+    if (e.target.closest && (e.target.closest("#troupe-form") || e.target.closest("#profile-form"))) formDirty = true;
+  });
+  window.addEventListener("beforeunload", function (e) {
+    if (formDirty) { e.preventDefault(); e.returnValue = ""; }
+  });
+
   document.addEventListener("click", async function (e) {
     var navBtn = e.target.closest("[data-nav]");
-    if (navBtn) { e.preventDefault(); setHash(navBtn.getAttribute("data-nav")); return; }
+    if (navBtn) {
+      e.preventDefault();
+      if (formDirty && !confirm("Tu as des modifications non enregistrées sur cette fiche. Veux-tu vraiment quitter sans les enregistrer ?")) return;
+      formDirty = false;
+      setHash(navBtn.getAttribute("data-nav"));
+      return;
+    }
 
     if (e.target.closest("#nav-logout")) { await doSignOut(); setHash("#/"); return; }
 
@@ -2195,6 +2240,10 @@
       if (idTargetId) { var idTarget = $(idTargetId); if (idTarget) idTarget.value = suggestItem.getAttribute("data-suggest-id") || ""; }
       sBox.hidden = true; sBox.innerHTML = "";
       sInput.focus();
+      if (sInput.id === "map-search-input" && idTargetId) {
+        var chosenId = $(idTargetId) ? $(idTargetId).value : "";
+        if (chosenId) zoomSurTroupe(chosenId);
+      }
       return;
     }
     // Clic ailleurs : referme toute liste de suggestions ouverte
@@ -2496,6 +2545,7 @@
         errEl2.textContent = /duplicate|unique/i.test(res2.error) ? "Ce pseudo est déjà pris, choisis-en un autre." : res2.error;
         return;
       }
+      formDirty = false;
       render();
       return;
     }
@@ -2551,6 +2601,7 @@
       }
       busy = false;
       if (result.error) { errEl3.textContent = result.error; return; }
+      formDirty = false;
       setHash("#/troupe/" + result.troupe.id);
       return;
     }
