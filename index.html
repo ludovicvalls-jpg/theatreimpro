@@ -131,6 +131,13 @@
   .spectacle-date { color: var(--gold); font-size: 0.85rem; margin: 2px 0 6px; }
   .spectacle-details { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
   .spectacle-more { margin-top: 6px; }
+  .spectacle-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .spectacle-ticket-link {
+    display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; text-decoration: none;
+    background: var(--gold); color: #201804; font-weight: 700; font-size: 0.82rem;
+    padding: 5px 12px; border-radius: 999px;
+  }
+  .spectacle-ticket-link:hover { opacity: 0.85; }
   .field-hint { display: block; color: var(--text-dim); font-size: 0.8rem; font-weight: 400; margin-top: 3px; }
   .suggest-wrap { position: relative; flex: 1 1 200px; }
   .suggest-list {
@@ -200,6 +207,7 @@
 
   .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin: 18px 0; }
   .stat-box { background: var(--surface-dim); border: 1px solid var(--border); border-radius: 6px; padding: 12px 10px; text-align: center; }
+  .stat-box .stat-icon { display: block; font-size: 1.1rem; margin-bottom: 2px; }
   .stat-box .num { font-family: "Bebas Neue", Georgia, serif; font-size: 1.5rem; color: var(--gold); display: block; }
   .stat-box .lbl { font-size: 0.72rem; color: var(--text-dim); }
 
@@ -212,6 +220,7 @@
     display: inline-flex; align-items: center; gap: 6px; background: var(--surface-dim); color: var(--text-dim);
     border: 1px dashed var(--border); border-radius: 999px; padding: 6px 12px; font-size: 0.82rem; opacity: 0.7;
   }
+  .badge-pill-sm { padding: 3px 9px !important; font-size: 0.7rem !important; }
 
   .section-title { font-size: 1.15rem; margin: 26px 0 10px; padding-top: 14px; border-top: 1px dashed var(--border); }
   .section-title:first-of-type { border-top: none; padding-top: 0; margin-top: 6px; }
@@ -271,11 +280,27 @@
   .country-tile .country-name { font-weight: 600; font-size: 0.85rem; text-align: center; }
   .country-tile .country-count { color: var(--text-dim); font-size: 0.78rem; }
 
+  .recherche-banner { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .recherche-pill {
+    display: inline-flex; align-items: center; gap: 6px; background: var(--gold); color: #201804;
+    border-radius: 999px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700;
+  }
+
   .profile-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
   .rencontre-requests-box { background: var(--surface-dim); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 12px 0; }
-  .rencontres-avatars { display: flex; flex-wrap: wrap; gap: 8px; }
-  .rencontre-avatar-btn { background: none; border: none; padding: 0; cursor: pointer; border-radius: 50%; line-height: 0; }
+  .rencontres-avatars { display: flex; flex-wrap: wrap; gap: 10px; }
+  .rencontre-avatar-btn {
+    background: none; border: none; padding: 0; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 4px; width: 74px; text-align: center;
+  }
   .rencontre-avatar-btn:hover .avatar { outline: 2px solid var(--gold); }
+  .rencontre-avatar-name {
+    font-size: 0.72rem; color: var(--text-dim); white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; max-width: 74px;
+  }
+
+  .comment-item { align-items: flex-start; }
+  .comment-item textarea { width: 100%; }
   .msg-badge {
     display: inline-flex; align-items: center; justify-content: center; background: var(--red); color: #fff;
     border-radius: 50%; min-width: 18px; height: 18px; font-size: 0.7rem; padding: 0 4px; margin-left: 4px; font-weight: 700;
@@ -418,6 +443,7 @@
       troupe_not_found: "Cette troupe n’existe pas (ou plus).", profile_not_found: "Ce profil n’existe pas (ou plus).",
       back_to_troupes: "&larr; Retour aux troupes", back_to_players: "&larr; Retour aux improvisateurs", back_generic: "&larr; Retour",
       spectacle_fallback_title: "Spectacle", spectacle_details_btn: "Voir les détails", spectacle_price_label: "PRIX :",
+      spectacle_tickets_btn: "Billets", spectacle_tickets_title: "Réserver sur le site de billetterie (nouvelle fenêtre)",
       spectacle_click_enlarge: "Cliquer pour agrandir",
       level_label: "Niveau", badge_locked_suffix: " à débloquer",
       impro_since_prefix: "🎭 Impro depuis ", impro_since_suffix: " ans)",
@@ -438,6 +464,12 @@
       badge_mc: "Maître·sse de cérémonie", badge_arbitre: "Arbitre", badge_coach: "Coach",
       badge_dix_equipes: "10 équipes rencontrées", badge_dix_ans: "10 ans d’impro", badge_trois_troupes: "3 troupes ou plus", badge_polyvalent: "Touche-à-tout (3 rôles)",
       badge_dresseur: "Dresseur pokéimprovisateur (10 rencontres)",
+      recherche_troupe_label: "Recherche une troupe", recherche_atelier_label: "Recherche un atelier",
+      section_comments: "💬 Livre d’or", comment_placeholder: "Écris un petit mot…", comment_submit: "Publier",
+      comment_login_hint: "Connecte-toi pour laisser un mot.", comment_save: "Enregistrer", comment_cancel: "Annuler",
+      comment_edit_btn: "Modifier", comment_delete_title: "Supprimer ce message",
+      comment_none: "Aucun message pour l’instant — sois le premier à en laisser un !",
+      comment_edited: "modifié",
       map_title: "🗺️ Où sont les troupes ?", map_hint: "Les troupes sont placées d’après leur ville — la position est approximative.",
       map_popup_view: "Voir la fiche",
       spectacles_title: "🎭 Prochains spectacles", spectacles_city_label: "Ta ville", spectacles_city_placeholder: "Ex. Montpellier",
@@ -488,6 +520,7 @@
       troupe_not_found: "This troupe doesn’t exist (anymore).", profile_not_found: "This profile doesn’t exist (anymore).",
       back_to_troupes: "&larr; Back to troupes", back_to_players: "&larr; Back to improvisers", back_generic: "&larr; Back",
       spectacle_fallback_title: "Show", spectacle_details_btn: "See details", spectacle_price_label: "PRICE:",
+      spectacle_tickets_btn: "Tickets", spectacle_tickets_title: "Book on the ticketing site (new window)",
       spectacle_click_enlarge: "Click to enlarge",
       level_label: "Level", badge_locked_suffix: " to unlock",
       impro_since_prefix: "🎭 Improvising since ", impro_since_suffix: " years)",
@@ -508,6 +541,12 @@
       badge_mc: "Master of ceremonies", badge_arbitre: "Referee", badge_coach: "Coach",
       badge_dix_equipes: "10 teams met", badge_dix_ans: "10 years of impro", badge_trois_troupes: "3 troupes or more", badge_polyvalent: "All-rounder (3 roles)",
       badge_dresseur: "Pokéimprov trainer (10 encounters)",
+      recherche_troupe_label: "Looking for a troupe", recherche_atelier_label: "Looking for a workshop",
+      section_comments: "💬 Guestbook", comment_placeholder: "Leave a note…", comment_submit: "Post",
+      comment_login_hint: "Log in to leave a note.", comment_save: "Save", comment_cancel: "Cancel",
+      comment_edit_btn: "Edit", comment_delete_title: "Delete this message",
+      comment_none: "No messages yet — be the first to leave one!",
+      comment_edited: "edited",
       map_title: "🗺️ Where are the troupes?", map_hint: "Troupes are placed based on their city — the position is approximate.",
       map_popup_view: "View profile",
       spectacles_title: "🎭 Upcoming shows", spectacles_city_label: "Your city", spectacles_city_placeholder: "E.g. Montpellier",
@@ -589,6 +628,10 @@
     var parts = d.split("-");
     if (parts.length !== 3) return d;
     return parts[2] + "/" + parts[1] + "/" + parts[0];
+  }
+  function fmtDateTimeShort(iso) {
+    if (!iso) return "";
+    return fmtDateFr(String(iso).slice(0, 10));
   }
   function fmtMembership(m) {
     if (m.date_debut) {
@@ -757,6 +800,22 @@
   async function fetchTroupesDuProfil(profileId) {
     var res = await supa.from("troupe_membres").select("*, troupes(id, nom, ville, pays)").eq("profile_id", profileId);
     return res.data || [];
+  }
+  // Livre d'or d'une fiche. Fait exprès de ne pas utiliser l'embed automatique "profiles(...)" du
+  // client (qui suppose toujours une colonne "profile_id" pour retrouver le profil à relier) car
+  // ici on a DEUX profils liés à chaque ligne (celui à qui appartient la fiche, et l'auteur du
+  // message) — on va donc chercher le profil de chaque auteur séparément, plus simple et fiable.
+  async function fetchCommentaires(profileId) {
+    var res = await supa.from("commentaires").select("*").eq("profile_id", profileId).order("created_at", { ascending: false });
+    var rows = res.data || [];
+    var auteurIds = uniqueList(rows.map(function (r) { return r.auteur_id; }));
+    var profilsParId = {};
+    for (var i = 0; i < auteurIds.length; i++) {
+      var au = await fetchProfileById(auteurIds[i]);
+      if (au) profilsParId[au.id] = au;
+    }
+    rows.forEach(function (r) { r.auteur = profilsParId[r.auteur_id] || null; });
+    return rows;
   }
   async function addRelated(table, payload) {
     var res = await supa.from(table).insert(payload).select().maybeSingle();
@@ -1177,11 +1236,26 @@
     );
   }
   function playerRowHtml(p) {
+    // Aperçu des hauts faits directement sur la carte de l'annuaire, avant même de cliquer.
+    // Calculé uniquement à partir des champs déjà présents sur le profil (spectacles, rôles,
+    // années d'impro…) : pas de requête supplémentaire par ligne (stages/équipes/troupes
+    // rencontrées ne sont pas rechargés ici), donc l'annuaire reste rapide même avec beaucoup
+    // d'improvisateurs. Un badge qui dépend de ces données-là n'apparaîtra donc qu'une fois sur
+    // la fiche complète, pas ici. Maximum 3 affichés + un compteur, pour ne pas alourdir la carte.
+    var badgesApercu = computeBadges(p, {});
+    var badgesHtml = badgesApercu.length ? (
+      '<div class="badge-row" style="margin:4px 0 0;">' +
+        badgesApercu.slice(0, 3).map(function (b) { return '<span class="badge-pill badge-pill-sm">' + esc(tr("badge_" + b.key)) + "</span>"; }).join("") +
+        (badgesApercu.length > 3 ? '<span class="badge-pill-sm badge-locked">+' + (badgesApercu.length - 3) + "</span>" : "") +
+      "</div>"
+    ) : "";
     return (
       '<button class="directory-row" data-nav="#/profil/' + esc(p.pseudo) + '">' +
         avatarHtml(p.avatar_url, p.pseudo, "avatar-md") +
-        '<span><span class="dr-name">' + esc(p.nom_complet || p.pseudo) + '</span><br>' +
-        '<span class="dr-sub">@' + esc(p.pseudo) + (p.ville ? " · " + esc(p.ville) : "") + (p.pays ? " " + esc(p.pays) : "") + "</span></span>" +
+        '<span style="flex:1;"><span class="dr-name">' + esc(p.nom_complet || p.pseudo) + '</span><br>' +
+        '<span class="dr-sub">@' + esc(p.pseudo) + (p.ville ? " · " + esc(p.ville) : "") + (p.pays ? " " + esc(p.pays) : "") + "</span>" +
+        badgesHtml +
+        "</span>" +
       "</button>"
     );
   }
@@ -1205,6 +1279,7 @@
     var troupesLiees = await fetchTroupesDuProfil(profile.id);
     var rencontresConfirmees = await fetchRencontresConfirmees(profile.id);
     var demandesRecues = isOwner ? await fetchDemandesRecues(profile.id) : [];
+    var commentaires = await fetchCommentaires(profile.id);
 
     // Relation ("j'ai déjà joué avec") entre la personne connectée et cette fiche, si ce n'est
     // pas sa propre fiche — utilisée pour proposer le bon bouton (proposer / en attente / accepter).
@@ -1252,6 +1327,13 @@
           (isOwner ? '<button class="btn-ghost btn-sm" data-nav="#/mon-profil/modifier" style="margin-left:auto;">' + tr("btn_modify") + "</button>" : "") +
         "</div>" +
 
+        ((profile.cherche_troupe || profile.cherche_atelier) ? (
+          '<div class="recherche-banner">' +
+            (profile.cherche_troupe ? '<span class="recherche-pill">🔍 ' + tr("recherche_troupe_label") + "</span>" : "") +
+            (profile.cherche_atelier ? '<span class="recherche-pill">🔍 ' + tr("recherche_atelier_label") + "</span>" : "") +
+          "</div>"
+        ) : "") +
+
         ((rencontreActionHtml || messageBtnHtml) ? '<div class="profile-actions">' + rencontreActionHtml + messageBtnHtml + "</div>" : "") +
 
         (demandesRecues.length ? (
@@ -1272,18 +1354,18 @@
           "</div>"
         ) : "") +
 
-        '<div class="stat-row">' +
-          statBox(profile.nb_spectacles || 0, tr("stat_shows")) +
-          statBox(stages.length, tr("stat_workshops")) +
-          statBox(paysJoues.length, tr("stat_countries")) +
-          statBox(troupesLiees.length, tr("stat_troupes")) +
-        "</div>" +
+        statRowHtml([
+          { icon: "🎭", num: profile.nb_spectacles || 0, label: tr("stat_shows") },
+          { icon: "📚", num: stages.length, label: tr("stat_workshops") },
+          { icon: "🌍", num: paysJoues.length, label: tr("stat_countries") },
+          { icon: "👥", num: troupesLiees.length, label: tr("stat_troupes") }
+        ]) +
 
         (profile.bio ? '<p>' + esc(profile.bio).replace(/\n/g, "<br>") + "</p>" : "") +
 
         '<div class="badge-row">' +
-          badges.map(function (b) { return '<span class="badge-pill">' + b.emoji + " " + esc(tr("badge_" + b.key)) + "</span>"; }).join("") +
-          (lockedCount > 0 ? '<span class="badge-locked">🔒 ' + lockedCount + tr("badge_locked_suffix") + "</span>" : "") +
+          badges.map(function (b) { return '<span class="badge-pill">' + esc(tr("badge_" + b.key)) + "</span>"; }).join("") +
+          (lockedCount > 0 ? '<span class="badge-locked">' + lockedCount + tr("badge_locked_suffix") + "</span>" : "") +
         "</div>" +
 
         (profile.annee_debut_impro ? '<p class="hint">' + tr("impro_since_prefix") + profile.annee_debut_impro + " (" + (currentYear() - profile.annee_debut_impro) + tr("impro_since_suffix") + "</p>" : "") +
@@ -1305,16 +1387,6 @@
           }).join("")
         ) : "") +
 
-        (rencontresConfirmees.length ? (
-          '<div class="section-title">' + tr("section_rencontres") + "</div>" +
-          '<p class="hint" style="margin:0 0 8px;">' + rencontresConfirmees.length + (rencontresConfirmees.length > 1 ? tr("rencontres_count_plural") : tr("rencontres_count_singular")) + "</p>" +
-          '<div class="rencontres-avatars">' +
-            rencontresConfirmees.map(function (p) {
-              return '<button class="rencontre-avatar-btn" data-nav="#/profil/' + esc(p.pseudo) + '" title="' + esc(p.nom_complet || p.pseudo) + '">' + avatarHtml(p.avatar_url, p.pseudo, "avatar-md") + "</button>";
-            }).join("") +
-          "</div>"
-        ) : "") +
-
         (stages.length ? (
           '<div class="section-title">' + tr("section_workshops") + "</div>" +
           stages.map(function (t) {
@@ -1328,6 +1400,16 @@
           '<p>' + equipes.map(function (e) {
             return e.troupe_id ? '<a href="#/troupe/' + esc(e.troupe_id) + '">' + esc(e.nom_equipe) + "</a>" : esc(e.nom_equipe);
           }).join(", ") + "</p>"
+        ) : "") +
+
+        (rencontresConfirmees.length ? (
+          '<div class="section-title">' + tr("section_rencontres") + "</div>" +
+          '<p class="hint" style="margin:0 0 8px;">' + rencontresConfirmees.length + (rencontresConfirmees.length > 1 ? tr("rencontres_count_plural") : tr("rencontres_count_singular")) + "</p>" +
+          '<div class="rencontres-avatars">' +
+            rencontresConfirmees.map(function (p) {
+              return '<button class="rencontre-avatar-btn" data-nav="#/profil/' + esc(p.pseudo) + '" title="' + esc(p.nom_complet || p.pseudo) + '">' + avatarHtml(p.avatar_url, p.pseudo, "avatar-md") + '<span class="rencontre-avatar-name">' + esc(p.nom_complet || p.pseudo) + "</span></button>";
+            }).join("") +
+          "</div>"
         ) : "") +
 
         ((profile.liens || []).length ? (
@@ -1350,10 +1432,60 @@
             return '<a href="' + esc(v.url) + '" target="_blank" rel="noopener">▶ ' + esc(v.caption || v.url) + "</a>";
           }).join("") + "</div>"
         ) : "") +
+
+        '<div class="section-title">' + tr("section_comments") + "</div>" +
+        (session ? (
+          '<form id="commentaire-form" data-profile-id="' + esc(profile.id) + '">' +
+            '<textarea name="texte" rows="2" maxlength="500" placeholder="' + tr("comment_placeholder") + '" required></textarea>' +
+            '<button type="submit" class="btn btn-sm" style="margin-top:6px;">' + tr("comment_submit") + "</button>" +
+          "</form>"
+        ) : '<p class="hint">' + tr("comment_login_hint") + "</p>") +
+        (commentaires.length ? commentaires.map(function (c) {
+          var estAuteur = session && session.user.id === c.auteur_id;
+          var peutSupprimer = session && (session.user.id === c.auteur_id || session.user.id === profile.id);
+          if (commentaireEnEditionId === c.id) {
+            return (
+              '<div class="list-item comment-item">' +
+                '<form class="comment-edit-form" data-comment-edit-id="' + esc(c.id) + '" style="flex:1;">' +
+                  '<textarea name="texte" rows="2" maxlength="500">' + esc(c.texte) + "</textarea>" +
+                  '<div style="display:flex;gap:8px;margin-top:6px;">' +
+                    '<button type="submit" class="btn btn-sm">' + tr("comment_save") + "</button>" +
+                    '<button type="button" class="btn-ghost btn-sm" data-cancel-edit-commentaire>' + tr("comment_cancel") + "</button>" +
+                  "</div>" +
+                "</form>" +
+              "</div>"
+            );
+          }
+          return (
+            '<div class="list-item comment-item">' +
+              '<div class="li-main" style="display:flex;gap:10px;align-items:flex-start;">' +
+                avatarHtml(c.auteur ? c.auteur.avatar_url : null, c.auteur ? c.auteur.pseudo : "?", "avatar-sm") +
+                '<div style="flex:1;">' +
+                  '<div class="li-sub">' +
+                    (c.auteur ? '<button class="btn-link" data-nav="#/profil/' + esc(c.auteur.pseudo) + '" style="text-decoration:none;color:var(--text);font-weight:600;">' + esc(c.auteur.nom_complet || c.auteur.pseudo) + "</button>" : "?") +
+                    " · " + fmtDateTimeShort(c.created_at) + (c.updated_at ? " (" + tr("comment_edited") + ")" : "") +
+                  "</div>" +
+                  "<div>" + esc(c.texte).replace(/\n/g, "<br>") + "</div>" +
+                "</div>" +
+              "</div>" +
+              '<div style="display:flex;gap:4px;">' +
+                (estAuteur ? '<button class="btn-link btn-sm" data-edit-commentaire="' + esc(c.id) + '">' + tr("comment_edit_btn") + "</button>" : "") +
+                (peutSupprimer ? '<button class="remove-x" data-remove="commentaires" data-id="' + esc(c.id) + '" title="' + tr("comment_delete_title") + '">&times;</button>' : "") +
+              "</div>" +
+            "</div>"
+          );
+        }).join("") : '<p class="empty-hint">' + tr("comment_none") + "</p>") +
       "</div>"
     );
   }
-  function statBox(num, label) { return '<div class="stat-box"><span class="num">' + num + '</span><span class="lbl">' + esc(label) + "</span></div>"; }
+  function statBox(icon, num, label) { return '<div class="stat-box"><span class="stat-icon">' + icon + '</span><span class="num">' + num + '</span><span class="lbl">' + esc(label) + "</span></div>"; }
+  // N'affiche jamais une case à 0 (Drawer trouvait que ça "rendait mal") : une fiche neuve ou peu
+  // remplie n'affiche donc que les statistiques qui ont vraiment quelque chose à montrer.
+  function statRowHtml(stats) {
+    var kept = stats.filter(function (s) { return s.num > 0; });
+    if (!kept.length) return "";
+    return '<div class="stat-row">' + kept.map(function (s) { return statBox(s.icon, s.num, s.label); }).join("") + "</div>";
+  }
   function uniqueList(arr) { var seen = {}, out = []; arr.forEach(function (x) { if (x && !seen[x]) { seen[x] = 1; out.push(x); } }); return out; }
 
   /* ================= Messagerie simple entre joueurs ================= */
@@ -1541,10 +1673,10 @@
           (isOwner ? '<button class="btn-ghost btn-sm" data-nav="#/troupe/' + esc(id) + '/modifier" style="margin-left:auto;">' + tr("btn_modify") + "</button>" : "") +
         "</div>" +
 
-        '<div class="stat-row">' +
-          statBox(membres.length, tr("stat_members")) +
-          statBox(tournois.length, tr("stat_workshops")) +
-        "</div>" +
+        statRowHtml([
+          { icon: "👥", num: membres.length, label: tr("stat_members") },
+          { icon: "📚", num: tournois.length, label: tr("stat_workshops") }
+        ]) +
 
         (t.description ? "<p>" + esc(t.description).replace(/\n/g, "<br>") + "</p>" : "") +
         (t.style_impro ? '<p class="hint">' + tr("troupe_style_label") + esc(t.style_impro) + "</p>" : "") +
@@ -1638,7 +1770,10 @@
             (sp.descriptif ? "<p>" + esc(sp.descriptif).replace(/\n/g, "<br>") + "</p>" : "") +
             (sp.prix ? '<p class="hint"><strong>' + tr("spectacle_price_label") + "</strong> " + esc(sp.prix) + "</p>" : "") +
           "</div>" +
-          '<button type="button" class="btn-link spectacle-more">' + tr("spectacle_details_btn") + "</button>" +
+          '<div class="spectacle-actions">' +
+            '<button type="button" class="btn-link spectacle-more">' + tr("spectacle_details_btn") + "</button>" +
+            (sp.billeterie_url ? '<a href="' + esc(sp.billeterie_url) + '" target="_blank" rel="noopener" class="spectacle-ticket-link" title="' + tr("spectacle_tickets_title") + '">🎟️ ' + tr("spectacle_tickets_btn") + "</a>" : "") +
+          "</div>" +
         "</div>" +
       "</div>"
     );
@@ -1757,7 +1892,7 @@
         list: spectacles.length ? spectacles.map(function (sp) {
           return '<div class="list-item"><div class="li-main"><div class="li-title">' + esc(sp.titre || "Spectacle") + '</div><div class="li-sub">' +
             fmtDateFr(sp.date_spectacle) + (sp.lieu ? " · " + esc(sp.lieu) : "") + "</div></div>" +
-            '<button type="button" class="btn-link btn-sm" data-edit-spectacle data-id="' + esc(sp.id) + '" data-titre="' + esc(sp.titre || "") + '" data-date="' + esc(sp.date_spectacle || "") + '" data-lieu="' + esc(sp.lieu || "") + '" data-prix="' + esc(sp.prix || "") + '" data-descriptif="' + esc(sp.descriptif || "") + '" title="Modifier ce spectacle" style="margin-right:8px;">✏️</button>' +
+            '<button type="button" class="btn-link btn-sm" data-edit-spectacle data-id="' + esc(sp.id) + '" data-titre="' + esc(sp.titre || "") + '" data-date="' + esc(sp.date_spectacle || "") + '" data-lieu="' + esc(sp.lieu || "") + '" data-prix="' + esc(sp.prix || "") + '" data-billeterie="' + esc(sp.billeterie_url || "") + '" data-descriptif="' + esc(sp.descriptif || "") + '" title="Modifier ce spectacle" style="margin-right:8px;">✏️</button>' +
             '<button class="remove-x" data-remove="spectacles" data-id="' + esc(sp.id) + '" title="Supprimer">&times;</button></div>';
         }).join("") : '<p class="empty-hint">Aucun spectacle annoncé pour l’instant.</p>',
         form: (
@@ -1769,6 +1904,7 @@
               '<div><label>Lieu</label><input type="text" name="lieu" placeholder="Lieu" autocomplete="off"></div>' +
             "</div>" +
             '<label>Prix</label><input type="text" name="prix" placeholder="Ex : 10€, gratuit…" style="max-width:220px;" autocomplete="off">' +
+            '<label>Lien de billetterie<span class="field-hint">Pour réserver en ligne — affiché avec un bouton "Billets" bien visible</span></label><input type="url" name="billeterie_url" placeholder="https://…" autocomplete="off">' +
             '<label>Descriptif</label><textarea name="descriptif" rows="3" placeholder="Présentation du spectacle"></textarea>' +
             '<label>Affiche<span class="field-hint">Format image, 1 Mo maximum — ne rien choisir garde l’affiche actuelle en cas de modification</span></label><input type="file" name="affiche" accept="image/*">' +
             '<label>Ou un lien direct vers une image</label><input type="url" name="affiche_url" placeholder="https://…" autocomplete="off">' +
@@ -1985,6 +2121,14 @@
       return '<label class="chip-check' + (checked ? " checked" : "") + '"><input type="checkbox" name="roles" value="' + esc(r.key) + '" ' + (checked ? "checked" : "") + ">" + esc(r.label) + "</label>";
     }).join("");
 
+    // Suggestions de mentor parmi les improvisateurs déjà inscrits — reste un champ texte libre
+    // (pas de vraie fiche liée), donc quelqu'un qui n'a pas encore de compte peut toujours être
+    // saisi à la main.
+    var toutesPersonnes = await fetchAllProfiles();
+    var mentorOptions = toutesPersonnes.filter(function (person) { return person.id !== p.id; }).map(function (person) {
+      return { value: person.nom_complet || person.pseudo, label: (person.nom_complet || person.pseudo) + " (@" + person.pseudo + ")" };
+    });
+
     var basicForm = (
       '<div class="card">' +
         "<h2>" + (isNew ? "Créer mon passeport" : "Mon passeport") + "</h2>" +
@@ -2008,7 +2152,9 @@
           "</div>" +
           '<div class="form-grid">' +
             '<div><label>Année de début d’impro</label><input type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" name="annee_debut_impro" value="' + v("annee_debut_impro") + '" autocomplete="off"></div>' +
-            '<div><label>MENTOR (celui qui t’a fait découvrir l’impro)</label><input type="text" name="mentor" value="' + v("mentor") + '" autocomplete="off"></div>' +
+            '<div><label>MENTOR (celui qui t’a fait découvrir l’impro)<span class="field-hint">Suggestions parmi les improvisateurs déjà inscrits, ou écris un nom libre</span></label>' +
+              '<div class="suggest-wrap"><input type="text" name="mentor" class="js-suggest" data-suggest-source="' + jsonAttr(mentorOptions) + '" value="' + v("mentor") + '" autocomplete="off"><div class="suggest-list" hidden></div></div>' +
+            "</div>" +
           "</div>" +
           '<label>Disciplines pratiquées</label><div>' + disciplinesHtml + "</div>" +
           '<label>Rôles joués</label><div>' + rolesHtml + "</div>" +
@@ -2016,6 +2162,11 @@
           '<label>Bio</label><textarea name="bio" rows="3" maxlength="600">' + v("bio") + "</textarea>" +
           '<label>Instagram<span class="field-hint">Le lien s’affichera avec une icône en haut de ta fiche publique</span></label>' +
           '<input type="url" name="instagram" placeholder="https://instagram.com/tonpseudo" value="' + v("instagram") + '" autocomplete="off">' +
+          '<label>Je recherche…<span class="field-hint">Affiché bien en évidence en haut de ta fiche publique</span></label>' +
+          '<div>' +
+            '<label class="chip-check' + (p.cherche_troupe ? " checked" : "") + '"><input type="checkbox" name="cherche_troupe" ' + (p.cherche_troupe ? "checked" : "") + "> " + tr("recherche_troupe_label") + "</label>" +
+            '<label class="chip-check' + (p.cherche_atelier ? " checked" : "") + '"><input type="checkbox" name="cherche_atelier" ' + (p.cherche_atelier ? "checked" : "") + "> " + tr("recherche_atelier_label") + "</label>" +
+          "</div>" +
           '<button type="submit" class="btn btn-save" style="margin-top:18px;">✓ Enregistrer</button>' +
           (!isNew ? ' <button type="button" id="view-my-profile" class="btn-ghost">Voir ma fiche publique</button>' : "") +
         "</form>" +
@@ -2140,6 +2291,9 @@
   // enregistrés, pour éviter de perdre ces changements en cliquant sur "Retour" ou un lien du menu
   // par mégarde — Drawer a signalé perdre ses modifications de cette façon.
   var formDirty = false;
+  // Id du commentaire (livre d'or) en cours de modification, s'il y en a un — affiche son
+  // formulaire d'édition à la place de son texte, le temps de la modification.
+  var commentaireEnEditionId = null;
   document.addEventListener("input", function (e) {
     if (e.target.closest && (e.target.closest("#troupe-form") || e.target.closest("#profile-form"))) formDirty = true;
   });
@@ -2205,6 +2359,7 @@
         specEditForm.date_spectacle.value = editSpectacleBtn.getAttribute("data-date") || "";
         specEditForm.lieu.value = editSpectacleBtn.getAttribute("data-lieu") || "";
         specEditForm.prix.value = editSpectacleBtn.getAttribute("data-prix") || "";
+        specEditForm.billeterie_url.value = editSpectacleBtn.getAttribute("data-billeterie") || "";
         specEditForm.descriptif.value = editSpectacleBtn.getAttribute("data-descriptif") || "";
         specEditForm.edit_id.value = editSpectacleBtn.getAttribute("data-id") || "";
         var specEditSubmitBtn = specEditForm.querySelector("button[type=submit]");
@@ -2223,6 +2378,7 @@
       specBlock.querySelectorAll(".spectacle-panel").forEach(function (p) { p.hidden = p.getAttribute("data-panel") !== which; });
       return;
     }
+    if (e.target.closest(".spectacle-ticket-link")) { return; }
     var specCard = e.target.closest(".spectacle-card");
     if (specCard) {
       var specDetails = specCard.querySelector(".spectacle-details");
@@ -2261,6 +2417,18 @@
       var id = removeBtn.getAttribute("data-id");
       await removeRelated(table, id);
       busy = false;
+      render({ preserveScroll: true });
+      return;
+    }
+    var editCommentaireBtn = e.target.closest("[data-edit-commentaire]");
+    if (editCommentaireBtn) {
+      commentaireEnEditionId = editCommentaireBtn.getAttribute("data-edit-commentaire");
+      render({ preserveScroll: true });
+      return;
+    }
+    var cancelEditCommentaireBtn = e.target.closest("[data-cancel-edit-commentaire]");
+    if (cancelEditCommentaireBtn) {
+      commentaireEnEditionId = null;
       render({ preserveScroll: true });
       return;
     }
@@ -2487,6 +2655,32 @@
       return;
     }
 
+    if (e.target.id === "commentaire-form") {
+      e.preventDefault();
+      if (!session) return;
+      var cf = e.target;
+      var cfTexte = cf.texte.value.trim();
+      if (!cfTexte) return;
+      busy = true;
+      await addRelated("commentaires", { profile_id: cf.getAttribute("data-profile-id"), auteur_id: session.user.id, texte: cfTexte });
+      busy = false;
+      render({ preserveScroll: true });
+      return;
+    }
+
+    if (e.target.classList && e.target.classList.contains("comment-edit-form")) {
+      e.preventDefault();
+      var cefId = e.target.getAttribute("data-comment-edit-id");
+      var cefTexte = e.target.texte.value.trim();
+      if (!cefTexte) return;
+      busy = true;
+      await updateRelated("commentaires", cefId, { texte: cefTexte, updated_at: new Date().toISOString() });
+      busy = false;
+      commentaireEnEditionId = null;
+      render({ preserveScroll: true });
+      return;
+    }
+
     if (e.target.id === "profile-form") {
       e.preventDefault();
       var f = e.target;
@@ -2503,7 +2697,9 @@
         roles: Array.prototype.slice.call(f.querySelectorAll('[name="roles"]:checked')).map(function (i) { return i.value; }),
         nb_spectacles: f.nb_spectacles.value ? parseInt(f.nb_spectacles.value, 10) : 0,
         bio: f.bio.value.trim(),
-        instagram: f.instagram.value.trim()
+        instagram: f.instagram.value.trim(),
+        cherche_troupe: f.cherche_troupe.checked,
+        cherche_atelier: f.cherche_atelier.checked
       };
       if (!/^[a-zA-Z0-9_\-.]{3,30}$/.test(fields.pseudo)) { errEl2.textContent = "Pseudo invalide (3 à 30 caractères, lettres/chiffres/_-. uniquement)."; return; }
       busy = true;
@@ -2652,6 +2848,7 @@
             date_spectacle: addForm.date_spectacle.value,
             lieu: addForm.lieu.value.trim(),
             prix: addForm.prix.value.trim(),
+            billeterie_url: addForm.billeterie_url.value.trim(),
             descriptif: addForm.descriptif.value.trim()
           };
           if (spEditId) {
