@@ -357,6 +357,78 @@
   }
 
   @media (max-width: 560px) { .profile-head { flex-direction: column; text-align: center; } }
+
+  /* ===== Habillage "v3" : plus aérien, plus lisible (surcharge les styles précédents) ===== */
+  :root { --radius: 16px; --radius-sm: 10px; --surface-2: #20202e; }
+  html { font-size: 17px; }
+  body { background: radial-gradient(1200px 600px at 50% -200px, #1f1b2e 0%, var(--bg) 60%) fixed; line-height: 1.5; }
+  #app { padding-top: 22px; }
+  h2 { font-size: 2.1rem; line-height: 1.05; }
+  .card { border-radius: var(--radius); padding: 26px 26px; border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 18px 40px -26px rgba(0,0,0,0.8); background: linear-gradient(180deg, var(--surface) 0%, var(--surface-dim) 100%); }
+  .profile-banner-img { width: calc(100% + 52px); margin: -26px -26px 20px; }
+  input, select, textarea { border-radius: var(--radius-sm); padding: 11px 13px; }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+  label { color: var(--text-dim); font-weight: 600; letter-spacing: 0.02em; margin-top: 18px; }
+  .btn, .btn-red, .btn-ghost, .btn-danger { border-radius: 999px; }
+  .btn { padding: 11px 22px; }
+  .btn-sm, .btn-red { padding: 8px 16px; }
+  .btn-ghost { padding: 9px 18px; }
+  .top-nav { border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+
+  /* En-tête de fiche */
+  .profile-head { gap: 22px; margin-bottom: 14px; }
+  .profile-head h2 { font-size: 2.4rem; }
+  .avatar-xl { width: 112px; height: 112px; border: 3px solid var(--gold); }
+  .profile-pseudo { font-size: 0.95rem; }
+
+  /* Chiffres clés : 3-4 grosses tuiles sobres */
+  html { background: var(--bg); }
+  .stat-row { gap: 10px; margin: 22px 0; grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); }
+  .stat-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 6px; }
+  .stat-box .stat-icon { font-size: 1.2rem; opacity: .9; }
+  .stat-box .num { font-size: 2.1rem; line-height: 1.1; }
+  .stat-box .lbl { font-size: 0.68rem; letter-spacing: 0.03em; text-transform: uppercase; }
+
+  /* Infos secondaires : grille propre au lieu de lignes grises en vrac */
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px 22px; margin: 18px 0 6px; padding: 16px 18px; background: rgba(255,255,255,0.03); border-radius: var(--radius); }
+  .fact { display: flex; flex-direction: column; gap: 2px; }
+  .fact-label { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); }
+  .fact-value { font-weight: 600; }
+
+  /* Hauts faits : discrets, une seule ligne qui défile au besoin */
+  .badge-row { gap: 6px; margin: 12px 0; }
+  .badge-pill { background: rgba(255,200,50,0.14); color: var(--gold-bright); border: 1px solid rgba(255,200,50,0.35); font-weight: 600; font-size: 0.78rem; padding: 5px 11px; }
+  .badge-locked { font-size: 0.78rem; padding: 5px 11px; }
+  .recherche-pill { font-size: 0.82rem; }
+
+  /* Titres de sections : un vrai repère visuel */
+  .section-title { font-family: "Inter", sans-serif; font-weight: 700; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); border-top: none; margin: 34px 0 12px; padding: 0 0 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .section-title:first-of-type { margin-top: 18px; padding-top: 0; }
+  .section-count { background: var(--gold); color: #201804; border-radius: 999px; font-size: 0.7rem; padding: 1px 8px; letter-spacing: 0; }
+
+  /* Listes : lignes aérées, sans boîtes dans les boîtes */
+  .list-item { background: none; border: none; border-bottom: 1px solid rgba(255,255,255,0.06); border-radius: 0; padding: 12px 2px; margin: 0; }
+  .list-item:last-child { border-bottom: none; }
+  .list-item .li-title { font-size: 1rem; }
+  .list-item .li-sub { font-size: 0.85rem; margin-top: 2px; }
+  .more-details { margin-top: 6px; }
+  .more-details summary { cursor: pointer; color: var(--text-dim); font-size: 0.88rem; padding: 8px 2px; }
+  .more-details summary:hover { color: var(--gold); }
+
+  /* Annuaires et cartes de spectacles */
+  .directory-row { border-radius: var(--radius); padding: 14px 18px; transition: transform .12s ease, border-color .12s ease; }
+  .directory-row:hover { transform: translateY(-1px); }
+  .spectacle-card { border-radius: var(--radius); padding: 14px; background: rgba(255,255,255,0.03); }
+  .spectacle-poster { border-radius: 10px; }
+  .home-tile { border-radius: var(--radius); }
+  .manage-panel { border-radius: var(--radius); }
+  .stat-box, .facts { box-shadow: none; }
+  @media (max-width: 560px) {
+    #app { padding: 16px 14px 90px; }
+    .card { padding: 20px 18px; }
+    .profile-banner-img { width: calc(100% + 36px); margin: -20px -18px 16px; }
+    .profile-head h2 { font-size: 2rem; }
+  }
 </style>
 </head>
 <body>
@@ -439,11 +511,11 @@
       troupes_country_unknown: "Pays non renseigné",
       founded_in: " · fondée en ",
       btn_modify: "✏️ Modifier",
-      stat_members: "membres", stat_workshops: "stages", stat_shows: "spectacles", stat_countries: "pays", stat_troupes: "troupes",
+      stat_members: "membres", stat_workshops: "stages effectués", stat_shows: "spectacles", stat_countries: "pays", stat_troupes: "troupes",
       section_shows: "🎭 Spectacles", tab_upcoming_shows: "Prochains spectacles", tab_past_shows: "Spectacles passés",
       empty_no_upcoming_show: "Aucun spectacle prévu pour l’instant.", empty_no_past_show: "Aucun spectacle passé enregistré.",
       section_members: "👥 Membres", empty_no_members: "Aucun membre renseigné.",
-      section_workshops: "📚 Stages", section_teams_met: "⚔️ Équipes rencontrées", section_photos: "📸 Photos", section_videos: "🎬 Vidéos",
+      section_workshops: "📚 Stages effectués", section_teams_met: "⚔️ Équipes rencontrées", section_photos: "📸 Photos", section_videos: "🎬 Vidéos",
       link_website_title: "Site web", link_instagram_title: "Instagram", link_facebook_title: "Facebook",
       troupe_style_label: "🎪 Style : ", troupe_rehearsal_label: "🏠 Répète à : ",
       troupe_not_found: "Cette troupe n’existe pas (ou plus).", profile_not_found: "Ce profil n’existe pas (ou plus).",
@@ -1043,6 +1115,7 @@
     return (profile.nb_spectacles || 0) * 2 + s.stagesCount * 4 +
       (profile.annee_debut_impro ? (currentYear() - profile.annee_debut_impro) * 3 : 0) + s.troupesCount * 4;
   }
+  var SHOW_LEVELS = false; // niveaux masqués pour le moment (passer à true pour les réafficher)
   var LEVEL_TITLES = ["Novice", "Apprenti·e", "Confirmé·e", "Vétéran·e", "Virtuose", "Légende"];
   function computeLevel(score) {
     var level = 1 + Math.floor(score / 40);
@@ -1063,6 +1136,7 @@
     if (parts[0] === "troupes") return { screen: "troupes" };
     if (parts[0] === "troupe" && parts[1] === "nouvelle") return { screen: "troupe-edit" };
     if (parts[0] === "troupe" && parts[1] && parts[2] === "modifier") return { screen: "troupe-edit", id: parts[1] };
+    if (parts[0] === "troupe" && parts[1] && parts[2] === "annoncer") return { screen: "spectacle-new", id: parts[1] };
     if (parts[0] === "troupe" && parts[1]) return { screen: "troupe", id: parts[1] };
     if (parts[0] === "spectacles") return { screen: "spectacles" };
     if (parts[0] === "carte") return { screen: "map" };
@@ -1096,6 +1170,7 @@
         case "troupes": html = await renderTroupes(); break;
         case "troupe": html = await renderTroupeScreen(view.id); break;
         case "troupe-edit": html = await renderTroupeEdit(view.id); break;
+        case "spectacle-new": html = await renderSpectacleNew(view.id); break;
         case "spectacles": html = await renderSpectacles(); break;
         case "map": html = await renderMapScreen(); break;
         case "messagerie": html = await renderMessagerieInbox(); break;
@@ -1248,7 +1323,7 @@
     // rencontrées ne sont pas rechargés ici), donc l'annuaire reste rapide même avec beaucoup
     // d'improvisateurs. Un badge qui dépend de ces données-là n'apparaîtra donc qu'une fois sur
     // la fiche complète, pas ici. Maximum 3 affichés + un compteur, pour ne pas alourdir la carte.
-    var badgesApercu = computeBadges(p, {});
+    var badgesApercu = computeBadges(Object.assign({}, p, { nb_spectacles: 0 }), {});
     var badgesHtml = badgesApercu.length ? (
       '<div class="badge-row" style="margin:4px 0 0;">' +
         badgesApercu.slice(0, 3).map(function (b) { return '<span class="badge-pill badge-pill-sm">' + esc(tr("badge_" + b.key)) + "</span>"; }).join("") +
@@ -1272,6 +1347,59 @@
     return '<span class="avatar ' + cls + '">' + esc(initial) + "</span>";
   }
 
+  // Spectacles "joués" par un improvisateur : calculés automatiquement à partir des spectacles
+  // déjà passés des troupes dont il fait (ou a fait) partie, aux dates où il en était membre.
+  async function fetchShowsPlayed(troupesLiees) {
+    var today = todayStr();
+    var out = [];
+    for (var i = 0; i < troupesLiees.length; i++) {
+      var tm = troupesLiees[i];
+      if (!tm.troupes) continue;
+      var shows = await fetchSpectaclesDeTroupe(tm.troupes.id);
+      shows.forEach(function (sp) {
+        if (!sp.date_spectacle || sp.date_spectacle > today) return;
+        var d = sp.date_spectacle;
+        var yr = parseInt(d.slice(0, 4), 10);
+        if (tm.date_debut && d < tm.date_debut) return;
+        if (tm.date_fin && d > tm.date_fin) return;
+        if (!tm.date_debut && tm.annee_debut && yr < tm.annee_debut) return;
+        if (!tm.date_debut && tm.annee_fin && yr > tm.annee_fin) return;
+        out.push({ sp: sp, troupe: tm.troupes });
+      });
+    }
+    out.sort(function (a, b) { return a.sp.date_spectacle < b.sp.date_spectacle ? 1 : a.sp.date_spectacle > b.sp.date_spectacle ? -1 : 0; });
+    return out;
+  }
+  function showsPlayedHtml(list) {
+    if (!list.length) return "";
+    function row(x) {
+      return '<div class="list-item"><div class="li-main"><div class="li-title">' + esc(x.sp.titre || "Spectacle") + '</div><div class="li-sub">' +
+        fmtDateFr(x.sp.date_spectacle) + (x.sp.lieu ? " · " + esc(x.sp.lieu) : "") + " · " +
+        '<button class="btn-link" data-nav="#/troupe/' + esc(x.troupe.id) + '" style="text-decoration:none;color:inherit;">' + esc(x.troupe.nom) + "</button></div></div></div>";
+    }
+    var first = list.slice(0, 5), rest = list.slice(5);
+    return (
+      '<div class="section-title">🎭 Spectacles joués <span class="section-count">' + list.length + "</span></div>" +
+      first.map(row).join("") +
+      (rest.length ? '<details class="more-details"><summary>Voir les ' + rest.length + ' autres</summary>' + rest.map(row).join("") + "</details>" : "")
+    );
+  }
+  // Maître de stage : stocké comme un pseudo (si choisi dans les suggestions) ou un nom libre.
+  async function fetchMaitresMap(stages) {
+    var map = {};
+    var names = uniqueList(stages.map(function (t) { return t.maitre; }).filter(Boolean));
+    for (var i = 0; i < names.length; i++) {
+      try { var pr = await fetchProfileByPseudo(String(names[i]).toLowerCase()); if (pr) map[names[i]] = pr; } catch (e) {}
+    }
+    return map;
+  }
+  function stageItemHtml(t, maitres) {
+    var m = t.maitre ? (maitres && maitres[t.maitre]) : null;
+    var maitreHtml = t.maitre ? ' · 🧑‍🏫 ' + (m ? '<button class="btn-link" data-nav="#/profil/' + esc(m.pseudo) + '" style="text-decoration:none;color:inherit;">' + esc(m.nom_complet || m.pseudo) + "</button>" : esc(t.maitre)) : "";
+    return '<div class="list-item"><div class="li-main"><div class="li-title">' + esc(t.nom) + '</div><div class="li-sub">' +
+      (t.annee ? t.annee + " · " : "") + esc(t.ville || "") + (t.pays ? " " + esc(t.pays) : "") + maitreHtml + "</div></div></div>";
+  }
+
   /* ================= Fiche d’un improvisateur (lecture) ================= */
   async function renderProfileScreen(pseudo) {
     var profile = await fetchProfileByPseudo(pseudo);
@@ -1286,6 +1414,9 @@
     var rencontresConfirmees = await fetchRencontresConfirmees(profile.id);
     var demandesRecues = isOwner ? await fetchDemandesRecues(profile.id) : [];
     var commentaires = await fetchCommentaires(profile.id);
+    var showsPlayed = await fetchShowsPlayed(troupesLiees);
+    profile.nb_spectacles = showsPlayed.length; // calcul automatique (plus de saisie à la main)
+    var maitres = await fetchMaitresMap(stages);
 
     // Relation ("j'ai déjà joué avec") entre la personne connectée et cette fiche, si ce n'est
     // pas sa propre fiche — utilisée pour proposer le bon bouton (proposer / en attente / accepter).
@@ -1328,7 +1459,7 @@
             "<h2>" + esc(profile.nom_complet || profile.pseudo) + (profile.instagram ? ' <a href="' + esc(profile.instagram) + '" target="_blank" rel="noopener" class="instagram-badge" title="Instagram">' + ICON_INSTAGRAM_SVG + '</a>' : "") + "</h2>" +
             '<div class="profile-pseudo">@' + esc(profile.pseudo) + "</div>" +
             '<div class="profile-meta">' + (profile.ville ? "📍 " + esc(profile.ville) : "") + (profile.pays ? " " + esc(profile.pays) : "") + "</div>" +
-            '<div class="level-pill">' + tr("level_label") + " " + lvl.level + " — " + esc(lvl.title) + "</div>" +
+            (SHOW_LEVELS ? '<div class="level-pill">' + tr("level_label") + " " + lvl.level + " — " + esc(lvl.title) + "</div>" : "") +
           "</div>" +
           (isOwner ? '<button class="btn-ghost btn-sm" data-nav="#/mon-profil/modifier" style="margin-left:auto;">' + tr("btn_modify") + "</button>" : "") +
         "</div>" +
@@ -1361,7 +1492,7 @@
         ) : "") +
 
         statRowHtml([
-          { icon: "🎭", num: profile.nb_spectacles || 0, label: tr("stat_shows") },
+          { icon: "🎭", num: showsPlayed.length, label: tr("stat_shows") },
           { icon: "📚", num: stages.length, label: tr("stat_workshops") },
           { icon: "🌍", num: paysJoues.length, label: tr("stat_countries") },
           { icon: "👥", num: troupesLiees.length, label: tr("stat_troupes") }
@@ -1374,10 +1505,12 @@
           (lockedCount > 0 ? '<span class="badge-locked">' + lockedCount + tr("badge_locked_suffix") + "</span>" : "") +
         "</div>" +
 
-        (profile.annee_debut_impro ? '<p class="hint">' + tr("impro_since_prefix") + profile.annee_debut_impro + " (" + (currentYear() - profile.annee_debut_impro) + tr("impro_since_suffix") + "</p>" : "") +
-        (rolesLabel ? '<p class="hint">' + tr("roles_label") + esc(rolesLabel) + "</p>" : "") +
-        (profile.mentor ? '<p class="hint">' + tr("mentor_label") + esc(profile.mentor) + "</p>" : "") +
-        ((profile.disciplines || []).length ? '<p class="hint">' + tr("disciplines_label") + esc(profile.disciplines.join(", ")) + "</p>" : "") +
+        factsHtml([
+          profile.annee_debut_impro ? ["🎭", "Impro depuis", profile.annee_debut_impro + " (" + (currentYear() - profile.annee_debut_impro) + (currentLang === "en" ? " yrs)" : " ans)")] : null,
+          rolesLabel ? ["🎬", "Rôles", esc(rolesLabel)] : null,
+          profile.mentor ? ["🧑‍🏫", "Mentor", esc(profile.mentor)] : null,
+          (profile.disciplines || []).length ? ["🎪", "Disciplines", esc(profile.disciplines.join(", "))] : null
+        ]) +
 
         (troupesLiees.length ? (
           '<div class="section-title">' + tr("section_my_troupes") + "</div>" +
@@ -1393,12 +1526,11 @@
           }).join("")
         ) : "") +
 
+        showsPlayedHtml(showsPlayed) +
+
         (stages.length ? (
-          '<div class="section-title">' + tr("section_workshops") + "</div>" +
-          stages.map(function (t) {
-            return '<div class="list-item"><div class="li-main"><div class="li-title">' + esc(t.nom) + '</div><div class="li-sub">' +
-              (t.annee ? t.annee + " · " : "") + esc(t.ville || "") + (t.pays ? " " + esc(t.pays) : "") + "</div></div></div>";
-          }).join("")
+          '<div class="section-title">' + tr("section_workshops") + ' <span class="section-count">' + stages.length + "</span></div>" +
+          stages.map(function (t) { return stageItemHtml(t, maitres); }).join("")
         ) : "") +
 
         (equipes.length ? (
@@ -1487,6 +1619,13 @@
   function statBox(icon, num, label) { return '<div class="stat-box"><span class="stat-icon">' + icon + '</span><span class="num">' + num + '</span><span class="lbl">' + esc(label) + "</span></div>"; }
   // N'affiche jamais une case à 0 (Drawer trouvait que ça "rendait mal") : une fiche neuve ou peu
   // remplie n'affiche donc que les statistiques qui ont vraiment quelque chose à montrer.
+  function factsHtml(items) {
+    var kept = items.filter(Boolean);
+    if (!kept.length) return "";
+    return '<div class="facts">' + kept.map(function (f) {
+      return '<div class="fact"><span class="fact-label">' + f[0] + " " + f[1] + '</span><span class="fact-value">' + f[2] + "</span></div>";
+    }).join("") + "</div>";
+  }
   function statRowHtml(stats) {
     var kept = stats.filter(function (s) { return s.num > 0; });
     if (!kept.length) return "";
@@ -1676,7 +1815,9 @@
             "<h2>" + esc(t.nom) + "</h2>" +
             '<div class="profile-meta">' + (t.ville ? "📍 " + esc(t.ville) : "") + (t.pays ? " " + esc(t.pays) : "") + (t.fondee_en ? tr("founded_in") + t.fondee_en : "") + "</div>" +
           "</div>" +
-          (isOwner ? '<button class="btn-ghost btn-sm" data-nav="#/troupe/' + esc(id) + '/modifier" style="margin-left:auto;">' + tr("btn_modify") + "</button>" : "") +
+          (isOwner ? '<div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">' +
+            '<button class="btn-red btn-sm" data-nav="#/troupe/' + esc(id) + '/annoncer">🔴 Annoncer un spectacle</button>' +
+            '<button class="btn-ghost btn-sm" data-nav="#/troupe/' + esc(id) + '/modifier">' + tr("btn_modify") + "</button></div>" : "") +
         "</div>" +
 
         statRowHtml([
@@ -1723,10 +1864,7 @@
 
         (tournois.length ? (
           '<div class="section-title">' + tr("section_workshops") + "</div>" +
-          tournois.map(function (tour) {
-            return '<div class="list-item"><div class="li-main"><div class="li-title">' + esc(tour.nom) + '</div><div class="li-sub">' +
-              (tour.annee ? tour.annee + " · " : "") + esc(tour.ville || "") + (tour.pays ? " " + esc(tour.pays) : "") + "</div></div></div>";
-          }).join("")
+          tournois.map(function (tour) { return stageItemHtml(tour, {}); }).join("")
         ) : "") +
 
         (equipes.length ? (
@@ -1797,6 +1935,24 @@
         (opts.list || "") +
         '<div id="' + opts.id + '" class="manage-form-wrap" hidden>' + opts.form + "</div>" +
       "</div>"
+    );
+  }
+  function spectacleFormHtml(t) {
+    return (
+          '<form class="add-form" data-kind="spectacle" data-troupe="' + esc(t.id) + '">' +
+            '<input type="hidden" name="edit_id" value="">' +
+            '<label style="margin-top:0;">Titre du spectacle</label><input type="text" name="titre" placeholder="Titre du spectacle" required autocomplete="off">' +
+            '<div class="form-grid">' +
+              '<div><label>Date</label><input type="date" name="date_spectacle" required autocomplete="off"></div>' +
+              '<div><label>Lieu</label><input type="text" name="lieu" placeholder="Lieu" autocomplete="off"></div>' +
+            "</div>" +
+            '<label>Prix</label><input type="text" name="prix" placeholder="Ex : 10€, gratuit…" style="max-width:220px;" autocomplete="off">' +
+            '<label>Lien de billetterie<span class="field-hint">Pour réserver en ligne — affiché avec un bouton "Billets" bien visible</span></label><input type="url" name="billeterie_url" placeholder="https://…" autocomplete="off">' +
+            '<label>Descriptif</label><textarea name="descriptif" rows="3" placeholder="Présentation du spectacle"></textarea>' +
+            '<label>Affiche<span class="field-hint">Format image, 1 Mo maximum — ne rien choisir garde l’affiche actuelle en cas de modification</span></label><input type="file" name="affiche" accept="image/*">' +
+            '<label>Ou un lien direct vers une image</label><input type="url" name="affiche_url" placeholder="https://…" autocomplete="off">' +
+            '<button type="submit" class="btn btn-sm" style="margin-top:10px;">Annoncer ce spectacle</button>' +
+          "</form>"
     );
   }
   function troupeManageHtml(t, membres, tournois, equipes, photos, videos, spectacles, allProfiles, toutesTroupes) {
@@ -1901,25 +2057,34 @@
             '<button type="button" class="btn-link btn-sm" data-edit-spectacle data-id="' + esc(sp.id) + '" data-titre="' + esc(sp.titre || "") + '" data-date="' + esc(sp.date_spectacle || "") + '" data-lieu="' + esc(sp.lieu || "") + '" data-prix="' + esc(sp.prix || "") + '" data-billeterie="' + esc(sp.billeterie_url || "") + '" data-descriptif="' + esc(sp.descriptif || "") + '" title="Modifier ce spectacle" style="margin-right:8px;">✏️</button>' +
             '<button class="remove-x" data-remove="spectacles" data-id="' + esc(sp.id) + '" title="Supprimer">&times;</button></div>';
         }).join("") : '<p class="empty-hint">Aucun spectacle annoncé pour l’instant.</p>',
-        form: (
-          '<form class="add-form" data-kind="spectacle" data-troupe="' + esc(t.id) + '">' +
-            '<input type="hidden" name="edit_id" value="">' +
-            '<label style="margin-top:0;">Titre du spectacle</label><input type="text" name="titre" placeholder="Titre du spectacle" required autocomplete="off">' +
-            '<div class="form-grid">' +
-              '<div><label>Date</label><input type="date" name="date_spectacle" required autocomplete="off"></div>' +
-              '<div><label>Lieu</label><input type="text" name="lieu" placeholder="Lieu" autocomplete="off"></div>' +
-            "</div>" +
-            '<label>Prix</label><input type="text" name="prix" placeholder="Ex : 10€, gratuit…" style="max-width:220px;" autocomplete="off">' +
-            '<label>Lien de billetterie<span class="field-hint">Pour réserver en ligne — affiché avec un bouton "Billets" bien visible</span></label><input type="url" name="billeterie_url" placeholder="https://…" autocomplete="off">' +
-            '<label>Descriptif</label><textarea name="descriptif" rows="3" placeholder="Présentation du spectacle"></textarea>' +
-            '<label>Affiche<span class="field-hint">Format image, 1 Mo maximum — ne rien choisir garde l’affiche actuelle en cas de modification</span></label><input type="file" name="affiche" accept="image/*">' +
-            '<label>Ou un lien direct vers une image</label><input type="url" name="affiche_url" placeholder="https://…" autocomplete="off">' +
-            '<button type="submit" class="btn btn-sm" style="margin-top:10px;">Annoncer ce spectacle</button>' +
-          "</form>"
-        )
+        form: spectacleFormHtml(t)
       }) +
       '<p id="manage-status" class="error-msg"></p>'
     );
+  }
+
+  /* ================= Annoncer un spectacle (écran dédié, accessible depuis la fiche troupe et "Prochains spectacles") ================= */
+  async function renderSpectacleNew(id) {
+    if (!session) { setHash("#/connexion"); return '<p class="hint">' + tr("redirecting") + '</p>'; }
+    var t = await fetchTroupeById(id);
+    var isAdmin = !!(myProfile && myProfile.is_admin);
+    if (!t || (t.created_by !== session.user.id && !isAdmin)) return '<div class="card"><p>Seul le modérateur de la troupe peut annoncer un spectacle.</p></div>';
+    return (
+      '<button class="back-btn" data-nav="#/troupe/' + esc(id) + '">&larr; Retour</button>' +
+      '<div class="card">' +
+        '<h2>🔴 Annoncer un spectacle</h2>' +
+        '<p class="hint" style="margin-top:0;">Troupe : <b>' + esc(t.nom) + '</b></p>' +
+        spectacleFormHtml(t) +
+        '<p id="manage-status" class="error-msg"></p>' +
+      '</div>'
+    );
+  }
+  var _spAnnounceFailed = false;
+  async function troupesIModerate() {
+    if (!session) return [];
+    var isAdmin = !!(myProfile && myProfile.is_admin);
+    var all = await fetchAllTroupes();
+    return all.filter(function (t) { return isAdmin || t.created_by === session.user.id; });
   }
 
   /* ================= Création / édition d’une troupe ================= */
@@ -1994,8 +2159,19 @@
     _spectaclesAll = all;
     var today = todayStr();
     var upcoming = all.filter(function (s) { return s.date_spectacle >= today; });
+    var mine = await troupesIModerate();
+    var announceHtml = "";
+    if (mine.length === 1) {
+      announceHtml = '<div style="margin-bottom:14px;"><button type="button" class="btn-red" data-nav="#/troupe/' + esc(mine[0].id) + '/annoncer">🔴 Annoncer un spectacle (' + esc(mine[0].nom) + ')</button></div>';
+    } else if (mine.length > 1) {
+      announceHtml = '<div class="card" style="margin-bottom:14px;"><label style="margin-top:0;">🔴 Annoncer un spectacle pour la troupe :</label>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><select id="sp-announce-troupe" style="flex:1 1 200px;">' +
+        mine.map(function (t) { return '<option value="' + esc(t.id) + '">' + esc(t.nom) + (t.ville ? " — " + esc(t.ville) : "") + "</option>"; }).join("") +
+        '</select><button type="button" class="btn-red btn-sm" id="sp-announce-go">Annoncer</button></div></div>';
+    }
     return (
       "<h2>" + tr("spectacles_title") + "</h2>" +
+      announceHtml +
       '<div class="card">' +
         '<form id="spectacles-filter-form" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">' +
           '<div style="flex:1 1 200px;"><label>' + tr("spectacles_city_label") + '</label><input type="text" id="spectacles-ville" placeholder="' + tr("spectacles_city_placeholder") + '" autocomplete="off"></div>' +
@@ -2164,7 +2340,6 @@
           "</div>" +
           '<label>Disciplines pratiquées</label><div>' + disciplinesHtml + "</div>" +
           '<label>Rôles joués</label><div>' + rolesHtml + "</div>" +
-          '<label>Nombre de spectacles joués</label><input type="number" name="nb_spectacles" min="0" value="' + v("nb_spectacles") + '" style="max-width:140px;" autocomplete="off">' +
           '<label>Bio</label><textarea name="bio" rows="3" maxlength="600">' + v("bio") + "</textarea>" +
           '<label>Instagram<span class="field-hint">Le lien s’affichera avec une icône en haut de ta fiche publique</span></label>' +
           '<input type="url" name="instagram" placeholder="https://instagram.com/tonpseudo" value="' + v("instagram") + '" autocomplete="off">' +
@@ -2213,10 +2388,10 @@
           "</form>"
         ) : '<p class="empty-hint">Aucune troupe créée pour l’instant — <button class="btn-link" data-nav="#/troupe/nouvelle">en créer une</button>.</p>') +
 
-        '<div class="section-title">📚 Stages</div>' +
+        '<div class="section-title">📚 Stages effectués</div>' +
         stages.map(function (t) {
           return '<div class="list-item"><div class="li-main"><div class="li-title">' + esc(t.nom) + '</div><div class="li-sub">' +
-            (t.annee ? t.annee + " · " : "") + esc(t.ville || "") + (t.pays ? " " + esc(t.pays) : "") + '</div></div>' +
+            (t.annee ? t.annee + " · " : "") + esc(t.ville || "") + (t.pays ? " " + esc(t.pays) : "") + (t.maitre ? " · 🧑‍🏫 " + esc(t.maitre) : "") + '</div></div>' +
             '<button class="remove-x" data-remove="tournois" data-id="' + esc(t.id) + '">&times;</button></div>';
         }).join("") +
         '<form class="add-form" data-kind="tournoi" data-owner-type="profile" data-owner-id="' + esc(p.id) + '">' +
@@ -2225,7 +2400,10 @@
             '<input type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" name="annee" placeholder="Année" autocomplete="off">' +
             '<input type="text" name="ville" placeholder="Ville" autocomplete="off">' +
             '<input type="text" name="pays" placeholder="Pays" autocomplete="off">' +
-            '<button type="submit" class="btn btn-sm">Ajouter</button>' +
+          "</div>" +
+          '<div class="form-row" style="margin-top:8px;">' +
+            '<div class="suggest-wrap"><input type="text" name="maitre" class="js-suggest" data-suggest-source="' + jsonAttr(toutesPersonnes.map(function (person) { return { value: person.pseudo, label: (person.nom_complet || person.pseudo) + " (@" + person.pseudo + ")" }; })) + '" placeholder="🧑‍🏫 Maître de stage (pseudo ou nom)" autocomplete="off"><div class="suggest-list" hidden></div></div>' +
+            '<button type="submit" class="btn btn-sm" style="flex:0 0 auto;">Ajouter</button>' +
           "</div>" +
         "</form>" +
 
@@ -2334,6 +2512,12 @@
 
     var chip = e.target.closest(".chip-check");
     if (chip) { setTimeout(function () { chip.classList.toggle("checked", chip.querySelector("input").checked); }, 0); }
+
+    if (e.target.id === "sp-announce-go") {
+      var spSel = $("sp-announce-troupe");
+      if (spSel && spSel.value) setHash("#/troupe/" + spSel.value + "/annoncer");
+      return;
+    }
 
     var toggleBtn = e.target.closest("[data-toggle]");
     if (toggleBtn) {
@@ -2701,7 +2885,6 @@
         mentor: f.mentor.value.trim(),
         disciplines: Array.prototype.slice.call(f.querySelectorAll('[name="disciplines"]:checked')).map(function (i) { return i.value; }),
         roles: Array.prototype.slice.call(f.querySelectorAll('[name="roles"]:checked')).map(function (i) { return i.value; }),
-        nb_spectacles: f.nb_spectacles.value ? parseInt(f.nb_spectacles.value, 10) : 0,
         bio: f.bio.value.trim(),
         instagram: f.instagram.value.trim(),
         cherche_troupe: f.cherche_troupe.checked,
@@ -2866,12 +3049,19 @@
             await addRelated("spectacles", spectaclePayload);
           }
         } else if (kind === "tournoi") {
-          await addRelated("tournois", {
+          var tournoiPayload = {
             owner_type: addForm.getAttribute("data-owner-type"), owner_id: addForm.getAttribute("data-owner-id"),
             nom: addForm.nom.value.trim(),
             annee: addForm.annee.value ? parseInt(addForm.annee.value, 10) : null,
             ville: addForm.ville.value.trim(), pays: addForm.pays.value.trim()
-          });
+          };
+          var maitreVal = addForm.maitre ? addForm.maitre.value.trim() : "";
+          if (maitreVal) tournoiPayload.maitre = maitreVal;
+          var tRes = await addRelated("tournois", tournoiPayload);
+          if (tRes && tRes.error) {
+            if (statusEl) statusEl.textContent = /maitre/i.test(tRes.error) ? "Le maître de stage n’est pas encore activé sur la base de données (voir la mise à jour Supabase à faire)." : "Une erreur est survenue : " + tRes.error;
+            busy = false; return;
+          }
         } else if (kind === "equipe") {
           var equipeTroupeId = addForm.troupe_id ? addForm.troupe_id.value.trim() : "";
           await addRelated("equipes_rencontrees", {
@@ -2907,8 +3097,14 @@
         }
       } catch (err) {
         if (statusEl) statusEl.textContent = "Une erreur est survenue.";
+        _spAnnounceFailed = true;
       }
       busy = false;
+      if (view.screen === "spectacle-new" && kind === "spectacle" && !_spAnnounceFailed) {
+        setHash("#/troupe/" + view.id);
+        return;
+      }
+      _spAnnounceFailed = false;
       render({ preserveScroll: true });
       return;
     }
@@ -3000,6 +3196,74 @@ if ("serviceWorker" in navigator) {
     try { navigator.serviceWorker.register("sw.js"); } catch (e) {}
   });
 }
+</script>
+<script>
+// Bandeau "Installer l'application" (indépendant du reste du site)
+(function () {
+  try {
+    var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    if (standalone) return;
+    try { if (localStorage.getItem("pi_install_dismissed") === "1") return; } catch (e) {}
+    var ua = navigator.userAgent || "";
+    var isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    var isMobile = isIOS || /android/i.test(ua);
+    if (!isMobile) return;
+    var deferred = null;
+
+    function show(textHtml, btnLabel, onBtn) {
+      if (document.getElementById("pi-install-bar")) return;
+      var bar = document.createElement("div");
+      bar.id = "pi-install-bar";
+      bar.style.cssText = "position:fixed;left:10px;right:10px;bottom:10px;z-index:99999;background:#111118;color:#f5f0e6;border:2px solid #e8b84a;border-radius:14px;padding:12px 14px;font:15px/1.35 Inter,system-ui,sans-serif;display:flex;align-items:center;gap:10px;box-shadow:0 6px 24px rgba(0,0,0,.45)";
+      var t = document.createElement("div");
+      t.style.cssText = "flex:1";
+      t.innerHTML = textHtml;
+      bar.appendChild(t);
+      if (btnLabel) {
+        var b = document.createElement("button");
+        b.textContent = btnLabel;
+        b.style.cssText = "background:#e8b84a;color:#111118;border:0;border-radius:10px;padding:10px 14px;font:700 15px Inter,system-ui,sans-serif;cursor:pointer";
+        b.onclick = onBtn;
+        bar.appendChild(b);
+      }
+      var x = document.createElement("button");
+      x.textContent = "✕";
+      x.setAttribute("aria-label", "Fermer");
+      x.style.cssText = "background:none;border:0;color:#f5f0e6;font-size:20px;padding:4px 6px;cursor:pointer";
+      x.onclick = function () {
+        try { localStorage.setItem("pi_install_dismissed", "1"); } catch (e) {}
+        bar.remove();
+      };
+      bar.appendChild(x);
+      document.body.appendChild(bar);
+    }
+
+    window.addEventListener("beforeinstallprompt", function (e) {
+      e.preventDefault();
+      deferred = e;
+      show("<b>Passeport Impro</b><br>Installe l'application sur ton téléphone", "Installer", function () {
+        if (!deferred) return;
+        deferred.prompt();
+        deferred.userChoice.then(function () {
+          deferred = null;
+          var bar = document.getElementById("pi-install-bar");
+          if (bar) bar.remove();
+        });
+      });
+    });
+
+    window.addEventListener("appinstalled", function () {
+      var bar = document.getElementById("pi-install-bar");
+      if (bar) bar.remove();
+    });
+
+    if (isIOS) {
+      setTimeout(function () {
+        show("<b>Installer l'application</b><br>Appuie sur <b>Partager</b> (le carré avec la flèche), puis sur <b>« Sur l'écran d'accueil »</b>");
+      }, 2500);
+    }
+  } catch (e) {}
+})();
 </script>
 </body>
 </html>
