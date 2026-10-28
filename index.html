@@ -429,6 +429,19 @@
     .profile-banner-img { width: calc(100% + 36px); margin: -20px -18px 16px; }
     .profile-head h2 { font-size: 2rem; }
   }
+
+  /* Fiche passeport en modification : chaque partie dans sa teinte sombre */
+  .card.sect { border-left: 4px solid var(--sect-accent, var(--border)); background: var(--sect-bg, var(--surface)); }
+  .sect-0 { --sect-bg: #1a1a26; --sect-accent: #6b6b8a; }
+  .sect-1 { --sect-bg: #162231; --sect-accent: #4f8fd6; }
+  .sect-2 { --sect-bg: #261a30; --sect-accent: #a068d0; }
+  .sect-3 { --sect-bg: #2e1a1d; --sect-accent: #e0626e; }
+  .sect-4 { --sect-bg: #152a22; --sect-accent: #4fc08d; }
+  .sect-5 { --sect-bg: #2b2616; --sect-accent: #d6b24f; }
+  .sect-6 { --sect-bg: #162b2e; --sect-accent: #4fbcc9; }
+  .sect-7 { --sect-bg: #2d2015; --sect-accent: #e08d4f; }
+  .sect .section-title { color: var(--sect-accent, var(--gold)); border-bottom-color: rgba(255,255,255,0.1); }
+  .sect input, .sect select, .sect textarea { background: rgba(0,0,0,0.28); }
 </style>
 </head>
 <body>
@@ -527,7 +540,7 @@
       impro_since_prefix: "🎭 Impro depuis ", impro_since_suffix: " ans)",
       roles_label: "🎬 Rôles : ", mentor_label: "🧑‍🏫 Mentor : ", disciplines_label: "🎪 Disciplines : ",
       section_my_troupes: "👥 Troupes", section_links: "🔗 Liens",
-      section_rencontres: "🤝 A déjà joué avec", rencontres_count_plural: " personnes rencontrées", rencontres_count_singular: " personne rencontrée",
+      section_rencontres: "🤝 IMPRODEX", rencontres_count_plural: " improvisateurs rencontrés sur scène", rencontres_count_singular: " improvisateur rencontré sur scène",
       rencontre_btn_add: "🤝 On a déjà joué ensemble", rencontre_btn_pending_sent: "⏳ Demande envoyée, en attente de validation.",
       rencontre_pending_received_label: "🤝 Cette personne dit avoir déjà joué avec toi :",
       rencontre_accept_btn: "✅ Accepter", rencontre_refuse_btn: "❌ Refuser",
@@ -604,7 +617,7 @@
       impro_since_prefix: "🎭 Improvising since ", impro_since_suffix: " years)",
       roles_label: "🎬 Roles: ", mentor_label: "🧑‍🏫 Mentor: ", disciplines_label: "🎪 Disciplines: ",
       section_my_troupes: "👥 Troupes", section_links: "🔗 Links",
-      section_rencontres: "🤝 Played with", rencontres_count_plural: " people met", rencontres_count_singular: " person met",
+      section_rencontres: "🤝 IMPRODEX", rencontres_count_plural: " improvisers met on stage", rencontres_count_singular: " improviser met on stage",
       rencontre_btn_add: "🤝 We’ve already played together", rencontre_btn_pending_sent: "⏳ Request sent, waiting for confirmation.",
       rencontre_pending_received_label: "🤝 This person says you’ve already played together:",
       rencontre_accept_btn: "✅ Accept", rencontre_refuse_btn: "❌ Decline",
@@ -934,6 +947,19 @@
     var autresIds = lignes.map(function (l) { return l.demandeur_id === profileId ? l.destinataire_id : l.demandeur_id; });
     var profils = await fetchAllProfiles();
     return autresIds.map(function (id) { return profils.filter(function (p) { return p.id === id; })[0]; }).filter(Boolean);
+  }
+  // Toutes les lignes IMPRODEX d'un profil (confirmées, envoyées en attente, reçues en attente),
+  // avec la fiche de l'autre personne — pour la page de modification du passeport.
+  async function fetchMesRencontres(profileId) {
+    var a = await supa.from("rencontres_joueurs").select("*").eq("demandeur_id", profileId);
+    var b = await supa.from("rencontres_joueurs").select("*").eq("destinataire_id", profileId);
+    var lignes = (a.data || []).concat(b.data || []);
+    var profils = await fetchAllProfiles();
+    return lignes.map(function (l) {
+      var autreId = l.demandeur_id === profileId ? l.destinataire_id : l.demandeur_id;
+      var p = profils.filter(function (x) { return x.id === autreId; })[0];
+      return p ? Object.assign({}, l, { profile: p, envoyee: l.demandeur_id === profileId }) : null;
+    }).filter(Boolean);
   }
   // Demandes de rencontre reçues par ce profil et pas encore traitées (à accepter ou refuser).
   async function fetchDemandesRecues(profileId) {
@@ -1323,18 +1349,15 @@
     // rencontrées ne sont pas rechargés ici), donc l'annuaire reste rapide même avec beaucoup
     // d'improvisateurs. Un badge qui dépend de ces données-là n'apparaîtra donc qu'une fois sur
     // la fiche complète, pas ici. Maximum 3 affichés + un compteur, pour ne pas alourdir la carte.
-    var badgesApercu = computeBadges(Object.assign({}, p, { nb_spectacles: 0 }), {});
-    var badgesHtml = badgesApercu.length ? (
-      '<div class="badge-row" style="margin:4px 0 0;">' +
-        badgesApercu.slice(0, 3).map(function (b) { return '<span class="badge-pill badge-pill-sm">' + esc(tr("badge_" + b.key)) + "</span>"; }).join("") +
-        (badgesApercu.length > 3 ? '<span class="badge-pill-sm badge-locked">+' + (badgesApercu.length - 3) + "</span>" : "") +
-      "</div>"
-    ) : "";
+    var badgesHtml = "";
+    var choisi = p.badge_affiche ? BADGE_DEFS.filter(function (b) { return b.key === p.badge_affiche; })[0] : null;
+    if (!choisi) choisi = computeBadges(Object.assign({}, p, { nb_spectacles: 0 }), {})[0];
+    if (choisi) badgesHtml = '<div class="badge-row" style="margin:4px 0 0;"><span class="badge-pill badge-pill-sm">' + esc(tr("badge_" + choisi.key)) + "</span></div>";
     return (
       '<button class="directory-row" data-nav="#/profil/' + esc(p.pseudo) + '">' +
         avatarHtml(p.avatar_url, p.pseudo, "avatar-md") +
         '<span style="flex:1;"><span class="dr-name">' + esc(p.nom_complet || p.pseudo) + '</span><br>' +
-        '<span class="dr-sub">@' + esc(p.pseudo) + (p.ville ? " · " + esc(p.ville) : "") + (p.pays ? " " + esc(p.pays) : "") + "</span>" +
+        '<span class="dr-sub">@' + esc(p.pseudo) + (p.ville ? " · " + esc(p.ville) : "") + (p.pays ? " " + esc(paysLabel(p.pays)) : "") + "</span>" +
         badgesHtml +
         "</span>" +
       "</button>"
@@ -1397,7 +1420,7 @@
     var m = t.maitre ? (maitres && maitres[t.maitre]) : null;
     var maitreHtml = t.maitre ? ' · 🧑‍🏫 ' + (m ? '<button class="btn-link" data-nav="#/profil/' + esc(m.pseudo) + '" style="text-decoration:none;color:inherit;">' + esc(m.nom_complet || m.pseudo) + "</button>" : esc(t.maitre)) : "";
     return '<div class="list-item"><div class="li-main"><div class="li-title">' + esc(t.nom) + '</div><div class="li-sub">' +
-      (t.annee ? t.annee + " · " : "") + esc(t.ville || "") + (t.pays ? " " + esc(t.pays) : "") + maitreHtml + "</div></div></div>";
+      (t.annee ? t.annee + " · " : "") + esc(t.ville || "") + (t.pays ? " " + esc(paysLabel(t.pays)) : "") + maitreHtml + "</div></div></div>";
   }
 
   /* ================= Fiche d’un improvisateur (lecture) ================= */
@@ -1458,7 +1481,7 @@
           "<div>" +
             "<h2>" + esc(profile.nom_complet || profile.pseudo) + (profile.instagram ? ' <a href="' + esc(profile.instagram) + '" target="_blank" rel="noopener" class="instagram-badge" title="Instagram">' + ICON_INSTAGRAM_SVG + '</a>' : "") + "</h2>" +
             '<div class="profile-pseudo">@' + esc(profile.pseudo) + "</div>" +
-            '<div class="profile-meta">' + (profile.ville ? "📍 " + esc(profile.ville) : "") + (profile.pays ? " " + esc(profile.pays) : "") + "</div>" +
+            '<div class="profile-meta">' + (profile.ville ? "📍 " + esc(profile.ville) : "") + (profile.pays ? " " + esc(paysLabel(profile.pays)) : "") + "</div>" +
             (SHOW_LEVELS ? '<div class="level-pill">' + tr("level_label") + " " + lvl.level + " — " + esc(lvl.title) + "</div>" : "") +
           "</div>" +
           (isOwner ? '<button class="btn-ghost btn-sm" data-nav="#/mon-profil/modifier" style="margin-left:auto;">' + tr("btn_modify") + "</button>" : "") +
@@ -1492,10 +1515,7 @@
         ) : "") +
 
         statRowHtml([
-          { icon: "🎭", num: showsPlayed.length, label: tr("stat_shows") },
-          { icon: "📚", num: stages.length, label: tr("stat_workshops") },
-          { icon: "🌍", num: paysJoues.length, label: tr("stat_countries") },
-          { icon: "👥", num: troupesLiees.length, label: tr("stat_troupes") }
+          { icon: "📚", num: stages.length, label: tr("stat_workshops") }
         ]) +
 
         (profile.bio ? '<p>' + esc(profile.bio).replace(/\n/g, "<br>") + "</p>" : "") +
@@ -1540,9 +1560,10 @@
           }).join(", ") + "</p>"
         ) : "") +
 
-        (rencontresConfirmees.length ? (
-          '<div class="section-title">' + tr("section_rencontres") + "</div>" +
-          '<p class="hint" style="margin:0 0 8px;">' + rencontresConfirmees.length + (rencontresConfirmees.length > 1 ? tr("rencontres_count_plural") : tr("rencontres_count_singular")) + "</p>" +
+        ((rencontresConfirmees.length || isOwner) ? (
+          '<div class="section-title">' + tr("section_rencontres") + (rencontresConfirmees.length ? ' <span class="section-count">' + rencontresConfirmees.length + "</span>" : "") + "</div>" +
+          (!rencontresConfirmees.length ? '<p class="empty-hint">Ton IMPRODEX est vide : va sur la fiche d’un improvisateur et appuie sur « On a déjà joué ensemble ». Il apparaîtra ici dès qu’il aura confirmé.</p>' : "") +
+          (rencontresConfirmees.length ? '<p class="hint" style="margin:0 0 8px;">' + rencontresConfirmees.length + (rencontresConfirmees.length > 1 ? tr("rencontres_count_plural") : tr("rencontres_count_singular")) + "</p>" : "") +
           '<div class="rencontres-avatars">' +
             rencontresConfirmees.map(function (p) {
               return '<button class="rencontre-avatar-btn" data-nav="#/profil/' + esc(p.pseudo) + '" title="' + esc(p.nom_complet || p.pseudo) + '">' + avatarHtml(p.avatar_url, p.pseudo, "avatar-md") + '<span class="rencontre-avatar-name">' + esc(p.nom_complet || p.pseudo) + "</span></button>";
@@ -1695,18 +1716,53 @@
   }
   // Classement par pays : petit drapeau (approximatif, déduit du texte du champ "Pays") pour
   // chaque pays représenté dans l'annuaire des troupes.
-  var COUNTRY_FLAGS = {
-    "france": "🇫🇷", "allemagne": "🇩🇪", "autriche": "🇦🇹", "suisse": "🇨🇭",
-    "belgique": "🇧🇪", "luxembourg": "🇱🇺", "italie": "🇮🇹", "espagne": "🇪🇸",
-    "pays-bas": "🇳🇱", "royaume-uni": "🇬🇧", "portugal": "🇵🇹", "canada": "🇨🇦",
-    "etats-unis": "🇺🇸", "quebec": "🇨🇦"
-  };
+  // Pays : on reconnaît le pays qu'il soit écrit en français, en anglais ou avec des variantes
+  // ("USA", "Etats-Unis", "United States"…), puis on affiche son drapeau et son nom dans la
+  // langue choisie sur le site. Un pays inconnu garde le texte saisi et le drapeau 🌐.
+  var _countryIndex = null;
+  function normCountry(x) {
+    return stripAccents(String(x || "")).toLowerCase().replace(/[-'’.]/g, " ").replace(/\s+/g, " ").trim();
+  }
+  function buildCountryIndex() {
+    var idx = {};
+    try {
+      var dnFr = new Intl.DisplayNames(["fr"], { type: "region" });
+      var dnEn = new Intl.DisplayNames(["en"], { type: "region" });
+      var A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      for (var i = 0; i < 26; i++) for (var j = 0; j < 26; j++) {
+        var code = A[i] + A[j];
+        var fr = dnFr.of(code), en = dnEn.of(code);
+        if (fr && fr !== code && en && en !== code) { idx[normCountry(fr)] = code; idx[normCountry(en)] = code; }
+      }
+    } catch (e) {}
+    var extra = { "usa": "US", "etats unis": "US", "etats unis d amerique": "US", "united states of america": "US", "us": "US", "uk": "GB",
+      "royaume uni": "GB", "angleterre": "GB", "england": "GB", "ecosse": "GB", "scotland": "GB", "pays de galles": "GB", "wales": "GB",
+      "grande bretagne": "GB", "great britain": "GB", "quebec": "CA", "holland": "NL", "hollande": "NL", "pays bas": "NL", "suisse": "CH",
+      "republique tcheque": "CZ", "tchequie": "CZ", "czech republic": "CZ", "coree du sud": "KR", "south korea": "KR", "russie": "RU",
+      "la reunion": "RE", "reunion": "RE", "martinique": "MQ", "guadeloupe": "GP", "nouvelle caledonie": "NC", "polynesie francaise": "PF",
+      "cote d ivoire": "CI", "ivory coast": "CI", "turquie": "TR", "turkey": "TR", "turkiye": "TR" };
+    for (var k in extra) idx[k] = extra[k];
+    return idx;
+  }
+  function countryInfo(pays) {
+    if (!_countryIndex) _countryIndex = buildCountryIndex();
+    var code = _countryIndex[normCountry(pays)];
+    if (!code) return null;
+    var flag = String.fromCodePoint(127397 + code.charCodeAt(0), 127397 + code.charCodeAt(1));
+    var name = (pays || "").trim();
+    try { name = new Intl.DisplayNames([currentLang === "en" ? "en" : "fr"], { type: "region" }).of(code) || name; } catch (e) {}
+    return { code: code, flag: flag, name: name };
+  }
   function flagForCountry(pays) {
-    var key = stripAccents((pays || "").trim().toLowerCase());
-    return COUNTRY_FLAGS[key] || "🌐";
+    var c = countryInfo(pays);
+    return c ? c.flag : "🌐";
+  }
+  function paysLabel(pays) {
+    var c = countryInfo(pays);
+    return c ? c.name : String(pays || "").trim();
   }
   function troupeCountryLabel(t) {
-    var p = (t.pays || "").trim();
+    var p = paysLabel(t.pays);
     return p || tr("troupes_country_unknown");
   }
   // Regroupe les troupes par pays (le champ "Pays" est un texte libre, donc on regroupe en
@@ -1716,7 +1772,8 @@
     var order = [];
     troupes.forEach(function (t) {
       var label = troupeCountryLabel(t);
-      var key = stripAccents(label).toLowerCase();
+      var ci = countryInfo(t.pays);
+      var key = ci ? ci.code : stripAccents(label).toLowerCase();
       if (!groups[key]) { groups[key] = { label: label, flag: flagForCountry(t.pays), items: [] }; order.push(key); }
       groups[key].items.push(t);
     });
@@ -1785,7 +1842,7 @@
       '<button class="directory-row" data-nav="#/troupe/' + esc(t.id) + '">' +
         avatarHtml(t.logo_url, t.nom, "avatar-md") +
         '<span><span class="dr-name">' + esc(t.nom) + '</span><br>' +
-        '<span class="dr-sub">' + esc(t.ville || "") + (t.pays ? " " + esc(t.pays) : "") + (t.fondee_en ? tr("founded_in") + t.fondee_en : "") + "</span></span>" +
+        '<span class="dr-sub">' + esc(t.ville || "") + (t.pays ? " " + esc(paysLabel(t.pays)) : "") + (t.fondee_en ? tr("founded_in") + t.fondee_en : "") + "</span></span>" +
       "</button>"
     );
   }
@@ -1813,7 +1870,7 @@
           avatarHtml(t.logo_url, t.nom, "avatar-xl") +
           "<div>" +
             "<h2>" + esc(t.nom) + "</h2>" +
-            '<div class="profile-meta">' + (t.ville ? "📍 " + esc(t.ville) : "") + (t.pays ? " " + esc(t.pays) : "") + (t.fondee_en ? tr("founded_in") + t.fondee_en : "") + "</div>" +
+            '<div class="profile-meta">' + (t.ville ? "📍 " + esc(t.ville) : "") + (t.pays ? " " + esc(paysLabel(t.pays)) : "") + (t.fondee_en ? tr("founded_in") + t.fondee_en : "") + "</div>" +
           "</div>" +
           (isOwner ? '<div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">' +
             '<button class="btn-red btn-sm" data-nav="#/troupe/' + esc(id) + '/annoncer">🔴 Annoncer un spectacle</button>' +
@@ -2311,8 +2368,28 @@
       return { value: person.nom_complet || person.pseudo, label: (person.nom_complet || person.pseudo) + " (@" + person.pseudo + ")" };
     });
 
+    var badgeSelectHtml = "";
+    if (!isNew) {
+      var tmB = await fetchTroupesDuProfil(p.id);
+      var stB = await fetchRelated("tournois", "profile", p.id);
+      var eqB = await fetchRelated("equipes_rencontrees", "profile", p.id);
+      var rcB = await fetchRencontresConfirmees(p.id);
+      var shB = await fetchShowsPlayed(tmB);
+      var paysB = uniqueList(stB.map(function (t) { return t.pays; }).filter(Boolean).concat(p.pays ? [p.pays] : []));
+      var statsB = { stagesCount: stB.length, paysCount: paysB.length, equipesCount: eqB.length, troupesCount: tmB.length, rencontresCount: rcB.length };
+      var earnedB = computeBadges(Object.assign({}, p, { nb_spectacles: shB.length }), statsB);
+      if (earnedB.length) {
+        badgeSelectHtml = (
+          '<label>Statut affiché dans l’annuaire<span class="field-hint">Un seul statut s’affiche sous ton nom dans la liste des improvisateurs — choisis-le parmi tes hauts faits</span></label>' +
+          '<select name="badge_affiche" style="max-width:340px;"><option value="">Automatique</option>' +
+          earnedB.map(function (b) { return '<option value="' + esc(b.key) + '"' + (p.badge_affiche === b.key ? " selected" : "") + ">" + esc(tr("badge_" + b.key)) + "</option>"; }).join("") +
+          "</select>"
+        );
+      }
+    }
+
     var basicForm = (
-      '<div class="card">' +
+      '<div class="card sect sect-0">' +
         "<h2>" + (isNew ? "Créer mon passeport" : "Mon passeport") + "</h2>" +
         (isNew ? '<p class="hint">Choisis un pseudo unique — c’est ce qui formera le lien de ta fiche.</p>' : "") +
         '<form id="profile-form" autocomplete="off">' +
@@ -2340,6 +2417,7 @@
           "</div>" +
           '<label>Disciplines pratiquées</label><div>' + disciplinesHtml + "</div>" +
           '<label>Rôles joués</label><div>' + rolesHtml + "</div>" +
+          badgeSelectHtml +
           '<label>Bio</label><textarea name="bio" rows="3" maxlength="600">' + v("bio") + "</textarea>" +
           '<label>Instagram<span class="field-hint">Le lien s’affichera avec une icône en haut de ta fiche publique</span></label>' +
           '<input type="url" name="instagram" placeholder="https://instagram.com/tonpseudo" value="' + v("instagram") + '" autocomplete="off">' +
@@ -2366,8 +2444,20 @@
 
     var troupeSuggestSource = jsonAttr(toutesTroupes.map(function (t) { return { value: t.nom, label: t.nom + (t.ville ? " — " + t.ville : ""), id: t.id }; }));
 
+    var mesRencontres = await fetchMesRencontres(p.id);
+    var mesRencontresHtml = mesRencontres.length ? mesRencontres.map(function (r) {
+      var nom = esc(r.profile.nom_complet || r.profile.pseudo);
+      var fiche = '<button class="btn-link li-title" data-nav="#/profil/' + esc(r.profile.pseudo) + '" style="text-decoration:none;color:var(--text);">' + nom + "</button>";
+      var droite = "", etat = "";
+      if (r.statut === "accepte") { etat = "✓ confirmé"; droite = '<button class="remove-x" data-rencontre-retirer="' + esc(r.id) + '" title="Retirer">&times;</button>'; }
+      else if (r.envoyee) { etat = "⏳ en attente de sa confirmation"; droite = '<button class="remove-x" data-rencontre-retirer="' + esc(r.id) + '" title="Annuler la demande">&times;</button>'; }
+      else { etat = "t’a envoyé une demande"; droite = '<span style="display:flex;gap:6px;"><button class="btn btn-sm" data-rencontre-accepter="' + esc(r.id) + '">Accepter</button><button class="btn-ghost btn-sm" data-rencontre-refuser="' + esc(r.id) + '">Refuser</button></span>'; }
+      return '<div class="list-item"><div class="li-main" style="display:flex;align-items:center;gap:10px;">' + avatarHtml(r.profile.avatar_url, r.profile.pseudo, "avatar-sm") +
+        "<div>" + fiche + '<div class="li-sub">' + etat + "</div></div></div>" + droite + "</div>";
+    }).join("") : '<p class="empty-hint">Ton IMPRODEX est vide pour l’instant.</p>';
+
     var extraSections = (
-      '<div class="card">' +
+      '<div class="card sect sect-1">' +
         '<div class="section-title" style="margin-top:0;">👥 Mes troupes</div>' +
         troupesLiees.map(function (tm) {
           var t = tm.troupes;
@@ -2388,10 +2478,10 @@
           "</form>"
         ) : '<p class="empty-hint">Aucune troupe créée pour l’instant — <button class="btn-link" data-nav="#/troupe/nouvelle">en créer une</button>.</p>') +
 
-        '<div class="section-title">📚 Stages effectués</div>' +
+        '</div><div class="card sect sect-2"><div class="section-title" style="margin-top:0;">📚 Stages effectués</div>' +
         stages.map(function (t) {
           return '<div class="list-item"><div class="li-main"><div class="li-title">' + esc(t.nom) + '</div><div class="li-sub">' +
-            (t.annee ? t.annee + " · " : "") + esc(t.ville || "") + (t.pays ? " " + esc(t.pays) : "") + (t.maitre ? " · 🧑‍🏫 " + esc(t.maitre) : "") + '</div></div>' +
+            (t.annee ? t.annee + " · " : "") + esc(t.ville || "") + (t.pays ? " " + esc(paysLabel(t.pays)) : "") + (t.maitre ? " · 🧑‍🏫 " + esc(t.maitre) : "") + '</div></div>' +
             '<button class="remove-x" data-remove="tournois" data-id="' + esc(t.id) + '">&times;</button></div>';
         }).join("") +
         '<form class="add-form" data-kind="tournoi" data-owner-type="profile" data-owner-id="' + esc(p.id) + '">' +
@@ -2407,7 +2497,7 @@
           "</div>" +
         "</form>" +
 
-        '<div class="section-title">⚔️ Équipes rencontrées</div>' +
+        '</div><div class="card sect sect-3"><div class="section-title" style="margin-top:0;">⚔️ Équipes rencontrées</div>' +
         equipes.map(function (e) {
           return '<div class="list-item"><div class="li-main">' +
             (e.troupe_id ? '<button class="btn-link" data-nav="#/troupe/' + esc(e.troupe_id) + '" style="text-decoration:none;color:var(--text);">' + esc(e.nom_equipe) + "</button>" : esc(e.nom_equipe)) +
@@ -2422,8 +2512,18 @@
           "</div>" +
         "</form>" +
 
+        '</div><div class="card sect sect-4"><div class="section-title" style="margin-top:0;">🤝 IMPRODEX — joueurs rencontrés sur scène</div>' +
+        '<p class="hint" style="margin-top:0;">Ajoute un improvisateur inscrit sur le site avec qui tu as joué. Il doit confirmer, puis il apparaît dans ton IMPRODEX (avatar cliquable vers sa fiche).</p>' +
+        mesRencontresHtml +
+        '<form class="add-form" data-kind="improdex">' +
+          '<div class="form-row">' +
+            '<div class="suggest-wrap"><input type="text" name="pseudo" class="js-suggest" data-suggest-source="' + jsonAttr(toutesPersonnes.filter(function (person) { return person.id !== p.id; }).map(function (person) { return { value: person.pseudo, label: (person.nom_complet || person.pseudo) + " (@" + person.pseudo + ")" }; })) + '" placeholder="Pseudo ou nom de l’improvisateur" required autocomplete="off"><div class="suggest-list" hidden></div></div>' +
+            '<button type="submit" class="btn btn-sm" style="flex:0 0 auto;">Ajouter</button>' +
+          "</div>" +
+        "</form>" +
+
         (p.liens && p.liens.length ? (
-          '<div class="section-title">🔗 Anciens liens</div>' +
+          '</div><div class="card sect sect-5"><div class="section-title" style="margin-top:0;">🔗 Anciens liens</div>' +
           '<p class="hint">Ces liens ont été ajoutés avant l’arrivée du champ Instagram ci-dessus. Tu peux les retirer si tu n’en as plus besoin.</p>' +
           p.liens.map(function (l, i) {
             return '<div class="list-item"><div class="li-main"><a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a></div>' +
@@ -2431,7 +2531,7 @@
           }).join("")
         ) : "") +
 
-        '<div class="section-title">📸 Photos de spectacles</div>' +
+        '</div><div class="card sect sect-6"><div class="section-title" style="margin-top:0;">📸 Photos de spectacles</div>' +
         (photos.length ? '<div class="photo-gallery">' + photos.map(function (ph) {
           return '<div style="position:relative;"><img src="' + esc(ph.url) + '" class="photo-zoom-trigger" data-photo="' + esc(ph.url) + '" alt="">' +
             '<button class="remove-x" data-remove="photos" data-id="' + esc(ph.id) + '" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);border-radius:50%;color:#fff;">&times;</button></div>';
@@ -2443,7 +2543,7 @@
           '<button type="submit" class="btn btn-sm" style="margin-top:10px;">Envoyer</button>' +
         "</form>" +
 
-        '<div class="section-title">🎬 Vidéos</div>' +
+        '</div><div class="card sect sect-7"><div class="section-title" style="margin-top:0;">🎬 Vidéos</div>' +
         videos.map(function (vd) {
           return '<div class="list-item"><div class="li-main"><a href="' + esc(vd.url) + '" target="_blank" rel="noopener">▶ ' + esc(vd.caption || vd.url) + '</a></div>' +
             '<button class="remove-x" data-remove="videos" data-id="' + esc(vd.id) + '">&times;</button></div>';
@@ -2890,6 +2990,7 @@
         cherche_troupe: f.cherche_troupe.checked,
         cherche_atelier: f.cherche_atelier.checked
       };
+      if (f.badge_affiche && f.badge_affiche.value !== ((myProfile && myProfile.badge_affiche) || "")) fields.badge_affiche = f.badge_affiche.value || null;
       if (!/^[a-zA-Z0-9_\-.]{3,30}$/.test(fields.pseudo)) { errEl2.textContent = "Pseudo invalide (3 à 30 caractères, lettres/chiffres/_-. uniquement)."; return; }
       busy = true;
       var avatarUrlPasted = $("avatar-url-input") ? $("avatar-url-input").value.trim() : "";
@@ -3090,6 +3191,15 @@
             if (upr.error) { if (statusEl) statusEl.textContent = upr.error; busy = false; return; }
             await addRelated("photos", { owner_type: ownerType, owner_id: ownerId, url: upr.url });
           }
+        } else if (kind === "improdex") {
+          var impPseudo = addForm.pseudo.value.trim().toLowerCase().replace(/^@/, "");
+          var impProf = await fetchProfileByPseudo(impPseudo);
+          if (!impProf) { if (statusEl) statusEl.textContent = "Aucun improvisateur avec ce pseudo — choisis dans les suggestions."; _spAnnounceFailed = false; busy = false; return; }
+          if (impProf.id === session.user.id) { if (statusEl) statusEl.textContent = "C’est toi !"; busy = false; return; }
+          var impExist = await fetchRencontreEntre(session.user.id, impProf.id);
+          if (impExist) { if (statusEl) statusEl.textContent = impExist.statut === "accepte" ? "Cette personne est déjà dans ton IMPRODEX." : "Une demande existe déjà avec cette personne."; busy = false; return; }
+          var impRes = await addRelated("rencontres_joueurs", { demandeur_id: session.user.id, destinataire_id: impProf.id, statut: "en_attente" });
+          if (impRes && impRes.error) { if (statusEl) statusEl.textContent = "Une erreur est survenue : " + impRes.error; busy = false; return; }
         } else if (kind === "lien") {
           var liens = (myProfile.liens || []).slice();
           liens.push({ label: addForm.label.value.trim(), url: addForm.url.value.trim() });
