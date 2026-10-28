@@ -442,6 +442,42 @@
   .sect-7 { --sect-bg: #2d2015; --sect-accent: #e08d4f; }
   .sect .section-title { color: var(--sect-accent, var(--gold)); border-bottom-color: rgba(255,255,255,0.1); }
   .sect input, .sect select, .sect textarea { background: rgba(0,0,0,0.28); }
+
+  .sect-8 { --sect-bg: #1b1d38; --sect-accent: #7f86e8; }
+  .sect-9 { --sect-bg: #1f2530; --sect-accent: #8da2c0; }
+
+  /* ===== Animations & réactions au survol / au toucher ===== */
+  @keyframes pi-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  #app > .card, #app > .directory-list, #app > .spectacle-list-grid, #app > .country-grid, #app > .grid-cards, #app > .manage-panel { animation: pi-rise .45s ease both; }
+  #app > .card:nth-of-type(2) { animation-delay: .05s; } #app > .card:nth-of-type(3) { animation-delay: .1s; }
+  #app > .card:nth-of-type(4) { animation-delay: .15s; } #app > .card:nth-of-type(5) { animation-delay: .2s; }
+  #app > .card:nth-of-type(n+6) { animation-delay: .25s; }
+  .card, .stat-box, .directory-row, .spectacle-card, .country-tile, .home-tile, .badge-pill, .list-item, .btn, .btn-ghost, .btn-red,
+  .avatar, .rencontre-avatar-btn, .photo-gallery img, .archive-tile img, .nav-primary button, .icon-link, .fact { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background-color .18s ease, filter .18s ease, opacity .18s ease; }
+  .card.sect:hover { transform: translateY(-2px); box-shadow: 0 22px 44px -22px var(--sect-accent, #000), 0 10px 24px -16px rgba(0,0,0,.8); }
+  .list-item:hover { background: rgba(255,255,255,0.045); }
+  .stat-box:hover, .fact:hover { transform: translateY(-3px); }
+  .spectacle-card:hover, .country-tile:hover { transform: translateY(-3px); border-color: var(--gold); box-shadow: 0 14px 30px -16px rgba(255,200,50,.45); }
+  .directory-row:hover { box-shadow: 0 12px 28px -18px rgba(255,200,50,.5); }
+  .badge-pill:hover { transform: scale(1.06) rotate(-1deg); }
+  .btn:hover, .btn-red:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 10px 22px -10px rgba(255,94,58,.7); }
+  .btn-ghost:hover { transform: translateY(-1px); }
+  .btn:active, .btn-red:active, .btn-ghost:active, .directory-row:active, .home-tile:active, .spectacle-card:active { transform: scale(.97); }
+  .profile-head .avatar-xl:hover { transform: scale(1.06) rotate(-2deg); box-shadow: 0 0 0 6px rgba(255,200,50,.18); }
+  .rencontre-avatar-btn:hover { transform: translateY(-4px) scale(1.08); }
+  .rencontre-avatar-btn:hover .avatar { outline: 2px solid var(--gold); box-shadow: 0 8px 18px -6px rgba(255,200,50,.6); }
+  .photo-gallery img:hover, .archive-tile img:hover { transform: scale(1.05); filter: brightness(1.1); z-index: 1; position: relative; }
+  .nav-primary button:hover:not(.active) { background: rgba(255,255,255,0.07); }
+  .icon-link:hover { transform: scale(1.18); }
+  @media (hover: none) { .card.sect:hover, .stat-box:hover, .fact:hover { transform: none; box-shadow: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    #app > * { animation: none !important; }
+    * { transition: none !important; }
+  }
+
+  .file-note { font-size: 0.85rem; color: var(--text-dim); margin: 6px 0; }
+  .file-note-err { color: var(--curtain); font-weight: 600; }
+  .role-tag { display: inline-block; font-size: 0.7rem; font-weight: 700; background: rgba(255,200,50,0.16); color: var(--gold-bright); border: 1px solid rgba(255,200,50,0.35); border-radius: 999px; padding: 1px 8px; margin-left: 6px; vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -879,6 +915,21 @@
     var res = await supa.from("troupe_membres").select("*, profiles(pseudo, nom_complet, avatar_url)").eq("troupe_id", troupeId);
     return res.data || [];
   }
+  // Modérateurs d'une troupe : le créateur, les administrateurs, et les membres marqués
+  // "modérateur" (colonne "moderateur" de troupe_membres). Si la colonne n'existe pas encore
+  // côté base, la requête échoue simplement et personne d'autre que le créateur/admin n'est modérateur.
+  async function iAmTroupeModerator(troupeId) {
+    if (!session) return false;
+    try {
+      var r = await supa.from("troupe_membres").select("id").eq("troupe_id", troupeId).eq("profile_id", session.user.id).eq("moderateur", true);
+      return !!(r.data && r.data.length);
+    } catch (e) { return false; }
+  }
+  async function canManageTroupe(t) {
+    if (!session || !t) return false;
+    if (t.created_by === session.user.id || (myProfile && myProfile.is_admin)) return true;
+    return await iAmTroupeModerator(t.id);
+  }
   async function fetchSpectaclesDeTroupe(troupeId) {
     var res = await supa.from("spectacles").select("*").eq("troupe_id", troupeId).order("date_spectacle", { ascending: true });
     return res.data || [];
@@ -1088,7 +1139,7 @@
   }
 
   /* ================= Upload de fichiers (avatars / photos) ================= */
-  var MAX_IMAGE_MB = 1;
+  var MAX_IMAGE_MB = 2;
   function fileExt(file) {
     var m = /\.([a-zA-Z0-9]+)$/.exec(file.name || "");
     return m ? m[1].toLowerCase() : "jpg";
@@ -1402,7 +1453,7 @@
     }
     var first = list.slice(0, 5), rest = list.slice(5);
     return (
-      '<div class="section-title">🎭 Spectacles joués <span class="section-count">' + list.length + "</span></div>" +
+      '</div><div class="card sect sect-8"><div class="section-title" style="margin-top:0;">🎭 Spectacles joués <span class="section-count">' + list.length + "</span></div>" +
       first.map(row).join("") +
       (rest.length ? '<details class="more-details"><summary>Voir les ' + rest.length + ' autres</summary>' + rest.map(row).join("") + "</details>" : "")
     );
@@ -1514,9 +1565,6 @@
           "</div>"
         ) : "") +
 
-        statRowHtml([
-          { icon: "📚", num: stages.length, label: tr("stat_workshops") }
-        ]) +
 
         (profile.bio ? '<p>' + esc(profile.bio).replace(/\n/g, "<br>") + "</p>" : "") +
 
@@ -1533,7 +1581,7 @@
         ]) +
 
         (troupesLiees.length ? (
-          '<div class="section-title">' + tr("section_my_troupes") + "</div>" +
+          '</div><div class="card sect sect-1"><div class="section-title" style="margin-top:0;">' + tr("section_my_troupes") + "</div>" +
           troupesLiees.map(function (tm) {
             var t = tm.troupes;
             if (!t) return "";
@@ -1549,19 +1597,19 @@
         showsPlayedHtml(showsPlayed) +
 
         (stages.length ? (
-          '<div class="section-title">' + tr("section_workshops") + ' <span class="section-count">' + stages.length + "</span></div>" +
+          '</div><div class="card sect sect-2"><div class="section-title" style="margin-top:0;">' + tr("section_workshops") + ' <span class="section-count">' + stages.length + "</span></div>" +
           stages.map(function (t) { return stageItemHtml(t, maitres); }).join("")
         ) : "") +
 
         (equipes.length ? (
-          '<div class="section-title">' + tr("section_teams_met") + "</div>" +
+          '</div><div class="card sect sect-3"><div class="section-title" style="margin-top:0;">' + tr("section_teams_met") + "</div>" +
           '<p>' + equipes.map(function (e) {
             return e.troupe_id ? '<a href="#/troupe/' + esc(e.troupe_id) + '">' + esc(e.nom_equipe) + "</a>" : esc(e.nom_equipe);
           }).join(", ") + "</p>"
         ) : "") +
 
         ((rencontresConfirmees.length || isOwner) ? (
-          '<div class="section-title">' + tr("section_rencontres") + (rencontresConfirmees.length ? ' <span class="section-count">' + rencontresConfirmees.length + "</span>" : "") + "</div>" +
+          '</div><div class="card sect sect-4"><div class="section-title" style="margin-top:0;">' + tr("section_rencontres") + (rencontresConfirmees.length ? ' <span class="section-count">' + rencontresConfirmees.length + "</span>" : "") + "</div>" +
           (!rencontresConfirmees.length ? '<p class="empty-hint">Ton IMPRODEX est vide : va sur la fiche d’un improvisateur et appuie sur « On a déjà joué ensemble ». Il apparaîtra ici dès qu’il aura confirmé.</p>' : "") +
           (rencontresConfirmees.length ? '<p class="hint" style="margin:0 0 8px;">' + rencontresConfirmees.length + (rencontresConfirmees.length > 1 ? tr("rencontres_count_plural") : tr("rencontres_count_singular")) + "</p>" : "") +
           '<div class="rencontres-avatars">' +
@@ -1572,27 +1620,27 @@
         ) : "") +
 
         ((profile.liens || []).length ? (
-          '<div class="section-title">' + tr("section_links") + "</div>" +
+          '</div><div class="card sect sect-5"><div class="section-title" style="margin-top:0;">' + tr("section_links") + "</div>" +
           '<div class="link-list">' + profile.liens.map(function (l) {
             return '<a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + "</a>";
           }).join("") + "</div>"
         ) : "") +
 
         (photos.length ? (
-          '<div class="section-title">' + tr("section_photos") + "</div>" +
+          '</div><div class="card sect sect-6"><div class="section-title" style="margin-top:0;">' + tr("section_photos") + "</div>" +
           '<div class="photo-gallery">' + photos.map(function (ph) {
             return '<img src="' + esc(ph.url) + '" class="photo-zoom-trigger" data-photo="' + esc(ph.url) + '" alt="">';
           }).join("") + "</div>"
         ) : "") +
 
         (videos.length ? (
-          '<div class="section-title">' + tr("section_videos") + "</div>" +
+          '</div><div class="card sect sect-7"><div class="section-title" style="margin-top:0;">' + tr("section_videos") + "</div>" +
           '<div class="link-list">' + videos.map(function (v) {
             return '<a href="' + esc(v.url) + '" target="_blank" rel="noopener">▶ ' + esc(v.caption || v.url) + "</a>";
           }).join("") + "</div>"
         ) : "") +
 
-        '<div class="section-title">' + tr("section_comments") + "</div>" +
+        '</div><div class="card sect sect-9"><div class="section-title" style="margin-top:0;">' + tr("section_comments") + "</div>" +
         (session ? (
           '<form id="commentaire-form" data-profile-id="' + esc(profile.id) + '">' +
             '<textarea name="texte" rows="2" maxlength="500" placeholder="' + tr("comment_placeholder") + '" required></textarea>' +
@@ -1852,7 +1900,7 @@
     var t = await fetchTroupeById(id);
     if (!t) return '<div class="card"><p>' + tr("troupe_not_found") + "</p></div>";
     var isAdmin = !!(myProfile && myProfile.is_admin);
-    var isOwner = session && (session.user.id === t.created_by || isAdmin);
+    var isOwner = await canManageTroupe(t);
     var membres = await fetchMembresDeTroupe(id);
     var tournois = await fetchRelated("tournois", "troupe", id);
     var equipes = await fetchRelated("equipes_rencontrees", "troupe", id);
@@ -1894,7 +1942,7 @@
         "</div>" +
 
         (spectacles.length ? (
-          '<div class="section-title">' + tr("section_shows") + "</div>" +
+          '</div><div class="card sect sect-8"><div class="section-title" style="margin-top:0;">' + tr("section_shows") + "</div>" +
           '<div class="spectacle-block">' +
             '<div class="spectacle-tabs">' +
               '<button type="button" class="spectacle-tab active" data-spectacle-tab="avenir">' + tr("tab_upcoming_shows") + " (" + spectaclesAVenir.length + ")</button>" +
@@ -1906,7 +1954,7 @@
         ) : "") +
 
         (membres.length ? (
-          '<div class="section-title">' + tr("section_members") + "</div>" +
+          '</div><div class="card sect sect-1"><div class="section-title" style="margin-top:0;">' + tr("section_members") + "</div>" +
           membres.map(function (m) {
             var p = m.profiles;
             if (!p) return "";
@@ -1920,26 +1968,26 @@
         ) : '<p class="empty-hint">' + tr("empty_no_members") + "</p>") +
 
         (tournois.length ? (
-          '<div class="section-title">' + tr("section_workshops") + "</div>" +
+          '</div><div class="card sect sect-2"><div class="section-title" style="margin-top:0;">' + tr("section_workshops") + "</div>" +
           tournois.map(function (tour) { return stageItemHtml(tour, {}); }).join("")
         ) : "") +
 
         (equipes.length ? (
-          '<div class="section-title">' + tr("section_teams_met") + "</div>" +
+          '</div><div class="card sect sect-3"><div class="section-title" style="margin-top:0;">' + tr("section_teams_met") + "</div>" +
           "<p>" + equipes.map(function (e) {
             return e.troupe_id ? '<a href="#/troupe/' + esc(e.troupe_id) + '">' + esc(e.nom_equipe) + "</a>" : esc(e.nom_equipe);
           }).join(", ") + "</p>"
         ) : "") +
 
         (photos.length ? (
-          '<div class="section-title">' + tr("section_photos") + "</div>" +
+          '</div><div class="card sect sect-6"><div class="section-title" style="margin-top:0;">' + tr("section_photos") + "</div>" +
           '<div class="photo-gallery">' + photos.map(function (ph) {
             return '<img src="' + esc(ph.url) + '" class="photo-zoom-trigger" data-photo="' + esc(ph.url) + '" alt="">';
           }).join("") + "</div>"
         ) : "") +
 
         (videos.length ? (
-          '<div class="section-title">' + tr("section_videos") + "</div>" +
+          '</div><div class="card sect sect-7"><div class="section-title" style="margin-top:0;">' + tr("section_videos") + "</div>" +
           '<div class="link-list">' + videos.map(function (v) {
             return '<a href="' + esc(v.url) + '" target="_blank" rel="noopener">▶ ' + esc(v.caption || v.url) + "</a>";
           }).join("") + "</div>"
@@ -2006,13 +2054,13 @@
             '<label>Prix</label><input type="text" name="prix" placeholder="Ex : 10€, gratuit…" style="max-width:220px;" autocomplete="off">' +
             '<label>Lien de billetterie<span class="field-hint">Pour réserver en ligne — affiché avec un bouton "Billets" bien visible</span></label><input type="url" name="billeterie_url" placeholder="https://…" autocomplete="off">' +
             '<label>Descriptif</label><textarea name="descriptif" rows="3" placeholder="Présentation du spectacle"></textarea>' +
-            '<label>Affiche<span class="field-hint">Format image, 1 Mo maximum — ne rien choisir garde l’affiche actuelle en cas de modification</span></label><input type="file" name="affiche" accept="image/*">' +
+            '<label>Affiche<span class="field-hint">Format image, 2 Mo maximum — ne rien choisir garde l’affiche actuelle en cas de modification</span></label><input type="file" name="affiche" accept="image/*">' +
             '<label>Ou un lien direct vers une image</label><input type="url" name="affiche_url" placeholder="https://…" autocomplete="off">' +
             '<button type="submit" class="btn btn-sm" style="margin-top:10px;">Annoncer ce spectacle</button>' +
           "</form>"
     );
   }
-  function troupeManageHtml(t, membres, tournois, equipes, photos, videos, spectacles, allProfiles, toutesTroupes) {
+  function troupeManageHtml(t, membres, tournois, equipes, photos, videos, spectacles, allProfiles, toutesTroupes, canAssignMods) {
     var pseudoOptions = (allProfiles || []).map(function (p) {
       return { value: p.pseudo, label: (p.nom_complet || p.pseudo) + " (@" + p.pseudo + ")" };
     });
@@ -2024,6 +2072,22 @@
         id: "toggle-membre-form",
         title: "👥 Membres",
         btnLabel: "+ Ajouter un membre",
+        list: (membres || []).length ? (
+          (canAssignMods ? '<p class="hint" style="margin:8px 0;">⭐ Un <b>modérateur</b> peut modifier la troupe, annoncer et modifier ses spectacles, photos, vidéos… Tu peux en choisir plusieurs.</p>' : "") +
+          membres.slice().sort(function (a, b) { return (b.moderateur ? 1 : 0) - (a.moderateur ? 1 : 0); }).map(function (m) {
+            var pr = m.profiles || {};
+            var nom = esc(pr.nom_complet || pr.pseudo || "?");
+            var estCreateur = m.profile_id && m.profile_id === t.created_by;
+            return '<div class="list-item"><div class="li-main" style="display:flex;align-items:center;gap:10px;">' + avatarHtml(pr.avatar_url, pr.pseudo, "avatar-sm") +
+              "<div>" + (pr.pseudo ? '<button class="btn-link li-title" data-nav="#/profil/' + esc(pr.pseudo) + '" style="text-decoration:none;color:var(--text);">' + nom + "</button>" : '<span class="li-title">' + nom + "</span>") +
+              (estCreateur ? ' <span class="role-tag">👑 Créateur</span>' : "") + (m.moderateur ? ' <span class="role-tag">⭐ Modérateur</span>' : "") +
+              '<div class="li-sub">' + fmtMembership(m) + "</div></div></div>" +
+              '<div style="display:flex;align-items:center;gap:8px;">' +
+                (canAssignMods && !estCreateur ? '<button type="button" class="' + (m.moderateur ? "btn-ghost" : "btn") + ' btn-sm" data-toggle-mod="' + esc(m.id) + '" data-mod="' + (m.moderateur ? "1" : "0") + '">' + (m.moderateur ? "Retirer modérateur" : "⭐ Nommer modérateur") + "</button>" : "") +
+                '<button class="remove-x" data-remove="troupe_membres" data-id="' + esc(m.id) + '" title="Retirer de la troupe">&times;</button>' +
+              "</div></div>";
+          }).join("")
+        ) : '<p class="empty-hint">Aucun membre pour l’instant.</p>',
         form: (
           '<p class="hint" style="margin-top:0;">Ajouter un membre par son pseudo (il doit déjà avoir un passeport) — commence à taper pour voir des suggestions :</p>' +
           '<form class="add-form" data-kind="membre" data-troupe="' + esc(t.id) + '">' +
@@ -2074,7 +2138,7 @@
           photos.length
             ? '<p class="hint" style="margin-top:0;">Supprime d’abord la photo actuelle (la croix ci-dessus) avant d’en ajouter une nouvelle.</p>'
             : (
-              '<p class="hint" style="margin-top:0;">Format image, 1 Mo maximum — ou colle un lien direct vers une image trouvée sur Internet (pas de limite dans ce cas).</p>' +
+              '<p class="hint" style="margin-top:0;">Format image, 2 Mo maximum — ou colle un lien direct vers une image trouvée sur Internet (pas de limite dans ce cas).</p>' +
               '<form class="add-form" data-kind="photo" data-owner-type="troupe" data-owner-id="' + esc(t.id) + '">' +
                 '<input type="file" name="photo" accept="image/*">' +
                 '<label style="margin-top:8px;">Ou un lien direct vers une image</label><input type="url" name="photo_url" placeholder="https://…" autocomplete="off">' +
@@ -2124,8 +2188,7 @@
   async function renderSpectacleNew(id) {
     if (!session) { setHash("#/connexion"); return '<p class="hint">' + tr("redirecting") + '</p>'; }
     var t = await fetchTroupeById(id);
-    var isAdmin = !!(myProfile && myProfile.is_admin);
-    if (!t || (t.created_by !== session.user.id && !isAdmin)) return '<div class="card"><p>Seul le modérateur de la troupe peut annoncer un spectacle.</p></div>';
+    if (!t || !(await canManageTroupe(t))) return '<div class="card"><p>Seul le modérateur de la troupe peut annoncer un spectacle.</p></div>';
     return (
       '<button class="back-btn" data-nav="#/troupe/' + esc(id) + '">&larr; Retour</button>' +
       '<div class="card">' +
@@ -2141,7 +2204,12 @@
     if (!session) return [];
     var isAdmin = !!(myProfile && myProfile.is_admin);
     var all = await fetchAllTroupes();
-    return all.filter(function (t) { return isAdmin || t.created_by === session.user.id; });
+    var modIds = {};
+    try {
+      var mr = await supa.from("troupe_membres").select("troupe_id").eq("profile_id", session.user.id).eq("moderateur", true);
+      (mr.data || []).forEach(function (r) { modIds[r.troupe_id] = true; });
+    } catch (e) {}
+    return all.filter(function (t) { return isAdmin || t.created_by === session.user.id || modIds[t.id]; });
   }
 
   /* ================= Création / édition d’une troupe ================= */
@@ -2149,7 +2217,9 @@
     if (!session) { setHash("#/connexion"); return '<p class="hint">' + tr("redirecting") + '</p>'; }
     var t = id ? await fetchTroupeById(id) : null;
     var isAdmin = !!(myProfile && myProfile.is_admin);
-    if (id && (!t || (t.created_by !== session.user.id && !isAdmin))) return '<div class="card"><p>Tu ne peux pas modifier cette troupe.</p></div>';
+    var canManage = !id || await canManageTroupe(t);
+    var isRealOwner = !id || (t && (t.created_by === session.user.id || isAdmin));
+    if (id && (!t || !canManage)) return '<div class="card"><p>Tu ne peux pas modifier cette troupe.</p></div>';
     t = t || {};
     function v(k) { return esc(t[k] || ""); }
     var managePanelHtml = "";
@@ -2165,9 +2235,9 @@
       managePanelHtml = (
         '<div class="manage-panel">' +
           '<div class="section-title" style="margin-top:0;">🛠️ Gérer la troupe</div>' +
-          troupeManageHtml(t, membres, tournois, equipes, photos, videos, spectacles, allProfiles, toutesTroupesPourEquipes) +
+          troupeManageHtml(t, membres, tournois, equipes, photos, videos, spectacles, allProfiles, toutesTroupesPourEquipes, isRealOwner) +
         "</div>" +
-        '<div class="card" style="margin-top:18px;border-color:var(--red);">' +
+        (!isRealOwner ? "" : '<div class="card" style="margin-top:18px;border-color:var(--red);">' +
           '<div class="section-title" style="margin-top:0;color:var(--red);">⚠️ Zone de danger</div>' +
           '<p class="hint">Supprimer une troupe efface aussi tous ses membres, stages, équipes rencontrées, spectacles, photos et vidéos. Cette action est définitive et ne peut pas être annulée.</p>' +
           '<button type="button" class="btn-red" data-toggle="toggle-delete-troupe">🗑️ Supprimer la troupe</button>' +
@@ -2176,7 +2246,7 @@
             '<button type="button" class="btn-ghost btn-sm" data-toggle="toggle-delete-troupe">Annuler</button> ' +
             '<button type="button" class="btn-red" id="confirm-delete-troupe" data-id="' + esc(id) + '">Oui, supprimer définitivement</button>' +
           "</div>" +
-        "</div>"
+        "</div>")
       );
     }
     return (
@@ -2200,7 +2270,7 @@
             '<div><label>Facebook</label><input type="url" name="facebook" value="' + v("facebook") + '" autocomplete="off"></div>' +
             '<div><label>Email de contact</label><input type="email" name="email_contact" value="' + v("email_contact") + '" autocomplete="off"></div>' +
           "</div>" +
-          '<label>Logo<span class="field-hint">Format image, 1 Mo maximum</span></label><input type="file" id="troupe-logo-input" accept="image/*">' +
+          '<label>Logo<span class="field-hint">Format image, 2 Mo maximum</span></label><input type="file" id="troupe-logo-input" accept="image/*">' +
           '<label>Ou un lien direct vers une image</label><input type="url" id="troupe-logo-url-input" placeholder="https://…" autocomplete="off">' +
           '<button type="submit" class="btn btn-save" style="margin-top:18px;">✓ Enregistrer</button>' +
         "</form>" +
@@ -2394,12 +2464,12 @@
         (isNew ? '<p class="hint">Choisis un pseudo unique — c’est ce qui formera le lien de ta fiche.</p>' : "") +
         '<form id="profile-form" autocomplete="off">' +
           (p.banner_url ? '<img src="' + esc(p.banner_url) + '" class="profile-banner-img" alt="" style="margin-bottom:14px;">' : "") +
-          '<label style="margin-top:0;">Bannière (une photo de toi en train d’improviser, affichée en haut de ta fiche)<span class="field-hint">Format image, 1 Mo maximum</span></label>' +
+          '<label style="margin-top:0;">Bannière (une photo de toi en train d’improviser, affichée en haut de ta fiche)<span class="field-hint">Format image, 2 Mo maximum</span></label>' +
           '<input type="file" id="banner-input" accept="image/*">' +
           '<input type="url" id="banner-url-input" placeholder="Ou un lien direct vers une image (https://…)" autocomplete="off" style="margin-top:6px;">' +
           '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:16px 0 6px;">' +
             avatarHtml(p.avatar_url, p.pseudo, "avatar-md") +
-            '<label style="margin:0;flex:1 1 200px;"><span style="display:block;color:var(--gold);font-weight:600;font-size:0.82rem;margin-bottom:5px;">Photo de profil<span class="field-hint" style="display:inline;color:var(--text-dim);font-weight:400;">— 1 Mo maximum</span></span><input type="file" id="avatar-input" accept="image/*"><input type="url" id="avatar-url-input" placeholder="Ou un lien direct (https://…)" autocomplete="off" style="margin-top:6px;width:100%;"></label>' +
+            '<label style="margin:0;flex:1 1 200px;"><span style="display:block;color:var(--gold);font-weight:600;font-size:0.82rem;margin-bottom:5px;">Photo de profil<span class="field-hint" style="display:inline;color:var(--text-dim);font-weight:400;">— 2 Mo maximum</span></span><input type="file" id="avatar-input" accept="image/*"><input type="url" id="avatar-url-input" placeholder="Ou un lien direct (https://…)" autocomplete="off" style="margin-top:6px;width:100%;"></label>' +
           "</div>" +
           '<div class="form-grid">' +
             '<div><label>Pseudo *</label><input type="text" name="pseudo" required pattern="[a-zA-Z0-9_\\-\\.]{3,30}" autocomplete="off" value="' + v("pseudo") + '" ' + (isNew ? "" : "readonly") + "></div>" +
@@ -2536,7 +2606,7 @@
           return '<div style="position:relative;"><img src="' + esc(ph.url) + '" class="photo-zoom-trigger" data-photo="' + esc(ph.url) + '" alt="">' +
             '<button class="remove-x" data-remove="photos" data-id="' + esc(ph.id) + '" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);border-radius:50%;color:#fff;">&times;</button></div>';
         }).join("") + "</div>" : "") +
-        '<p class="hint" style="margin-top:8px;">Format image, 1 Mo maximum — ou colle un lien direct vers une image trouvée sur Internet (pas de limite dans ce cas).</p>' +
+        '<p class="hint" style="margin-top:8px;">Format image, 2 Mo maximum — ou colle un lien direct vers une image trouvée sur Internet (pas de limite dans ce cas).</p>' +
         '<form class="add-form" data-kind="photo" data-owner-type="profile" data-owner-id="' + esc(p.id) + '">' +
           '<input type="file" name="photo" accept="image/*">' +
           '<label style="margin-top:8px;">Ou un lien direct vers une image</label><input type="url" name="photo_url" placeholder="https://…" autocomplete="off">' +
@@ -2580,6 +2650,33 @@
   var commentaireEnEditionId = null;
   document.addEventListener("input", function (e) {
     if (e.target.closest && (e.target.closest("#troupe-form") || e.target.closest("#profile-form"))) formDirty = true;
+  });
+  // Choix d'une image : on affiche son nom et son poids avec un bouton pour la retirer, et si elle
+  // est trop lourde on la retire tout de suite avec un message clair.
+  document.addEventListener("change", function (e) {
+    var inp = e.target;
+    if (!inp || inp.type !== "file" || (inp.accept || "").indexOf("image") !== 0) return;
+    var prev = inp.parentNode.querySelector('.file-note[data-for="' + (inp.name || inp.id) + '"]');
+    if (prev) prev.remove();
+    var f = inp.files && inp.files[0];
+    if (!f) return;
+    var mo = (f.size / 1048576).toFixed(1).replace(".", ",");
+    var note = document.createElement("div");
+    note.className = "file-note";
+    note.setAttribute("data-for", inp.name || inp.id);
+    var tooBig = f.size > MAX_IMAGE_MB * 1048576;
+    if (tooBig) {
+      inp.value = "";
+      note.classList.add("file-note-err");
+      note.textContent = "⚠️ « " + f.name + " » pèse " + mo + " Mo : c’est trop lourd (maximum " + MAX_IMAGE_MB + " Mo). Elle a été retirée — choisis une photo plus légère.";
+    } else {
+      note.textContent = "📎 " + f.name + " (" + mo + " Mo) ";
+      var rm = document.createElement("button");
+      rm.type = "button"; rm.className = "btn-link"; rm.textContent = "✕ Retirer";
+      rm.onclick = function () { inp.value = ""; note.remove(); };
+      note.appendChild(rm);
+    }
+    inp.insertAdjacentElement("afterend", note);
   });
   document.addEventListener("change", function (e) {
     if (e.target.closest && (e.target.closest("#troupe-form") || e.target.closest("#profile-form"))) formDirty = true;
@@ -2705,8 +2802,27 @@
       busy = true;
       var table = removeBtn.getAttribute("data-remove");
       var id = removeBtn.getAttribute("data-id");
-      await removeRelated(table, id);
+      var rmRes = await removeRelated(table, id);
       busy = false;
+      if (rmRes && rmRes.error) {
+        var rmStatus = $("manage-status");
+        if (rmStatus) rmStatus.textContent = "Suppression impossible : " + rmRes.error;
+        return;
+      }
+      render({ preserveScroll: true });
+      return;
+    }
+    var toggleModBtn = e.target.closest("[data-toggle-mod]");
+    if (toggleModBtn) {
+      if (busy) return;
+      busy = true;
+      var modRes = await updateRelated("troupe_membres", toggleModBtn.getAttribute("data-toggle-mod"), { moderateur: toggleModBtn.getAttribute("data-mod") !== "1" });
+      busy = false;
+      if (modRes && modRes.error) {
+        var modStatus = $("manage-status");
+        if (modStatus) modStatus.textContent = /moderateur/i.test(modRes.error) ? "Les modérateurs ne sont pas encore activés sur la base de données (voir la mise à jour Supabase à faire)." : "Erreur : " + modRes.error;
+        return;
+      }
       render({ preserveScroll: true });
       return;
     }
