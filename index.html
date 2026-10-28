@@ -478,6 +478,9 @@
   .file-note { font-size: 0.85rem; color: var(--text-dim); margin: 6px 0; }
   .file-note-err { color: var(--curtain); font-weight: 600; }
   .role-tag { display: inline-block; font-size: 0.7rem; font-weight: 700; background: rgba(255,200,50,0.16); color: var(--gold-bright); border: 1px solid rgba(255,200,50,0.35); border-radius: 999px; padding: 1px 8px; margin-left: 6px; vertical-align: middle; }
+
+  .banner-preview { display: block; width: 100%; max-height: 220px; object-fit: cover; border-radius: 12px; margin: 6px 0 14px; }
+  .avatar-edit { width: 256px; height: 256px; max-width: 100%; font-size: 6rem; border: 3px solid var(--gold); }
 </style>
 </head>
 <body>
@@ -504,6 +507,17 @@
     "Impro musicale", "Impro en langue étrangère", "Café-théâtre improvisé",
     "Clown impro", "Expérimental"
   ];
+  // Statut affiché sous le nom dans l'annuaire des improvisateurs (au choix, ou aucun).
+  var STATUTS = [
+    { key: "apprenti", emoji: "🌱", label: "Apprenti·e" },
+    { key: "dieu", emoji: "⚡", label: "Dieu / Déesse de la scène" },
+    { key: "formateur", emoji: "🎓", label: "Formateur·rice" },
+    { key: "clown", emoji: "🤡", label: "Clown·e" },
+    { key: "troubadour", emoji: "🎸", label: "Troubadour·e" },
+    { key: "spectateur", emoji: "🍿", label: "Spectateur·rice" },
+    { key: "obscur", emoji: "🌑", label: "Seigneur / Dame du côté obscur" }
+  ];
+  function statutOf(key) { return STATUTS.filter(function (x) { return x.key === key; })[0] || null; }
   var ROLES = [
     { key: "joueur", label: "Joueur·se" },
     { key: "arbitre", label: "Arbitre" },
@@ -1401,9 +1415,8 @@
     // d'improvisateurs. Un badge qui dépend de ces données-là n'apparaîtra donc qu'une fois sur
     // la fiche complète, pas ici. Maximum 3 affichés + un compteur, pour ne pas alourdir la carte.
     var badgesHtml = "";
-    var choisi = p.badge_affiche ? BADGE_DEFS.filter(function (b) { return b.key === p.badge_affiche; })[0] : null;
-    if (!choisi) choisi = computeBadges(Object.assign({}, p, { nb_spectacles: 0 }), {})[0];
-    if (choisi) badgesHtml = '<div class="badge-row" style="margin:4px 0 0;"><span class="badge-pill badge-pill-sm">' + esc(tr("badge_" + choisi.key)) + "</span></div>";
+    var st = statutOf(p.badge_affiche);
+    if (st) badgesHtml = '<div class="badge-row" style="margin:4px 0 0;"><span class="badge-pill badge-pill-sm">' + st.emoji + " " + esc(st.label) + "</span></div>";
     return (
       '<button class="directory-row" data-nav="#/profil/' + esc(p.pseudo) + '">' +
         avatarHtml(p.avatar_url, p.pseudo, "avatar-md") +
@@ -1533,6 +1546,7 @@
             "<h2>" + esc(profile.nom_complet || profile.pseudo) + (profile.instagram ? ' <a href="' + esc(profile.instagram) + '" target="_blank" rel="noopener" class="instagram-badge" title="Instagram">' + ICON_INSTAGRAM_SVG + '</a>' : "") + "</h2>" +
             '<div class="profile-pseudo">@' + esc(profile.pseudo) + "</div>" +
             '<div class="profile-meta">' + (profile.ville ? "📍 " + esc(profile.ville) : "") + (profile.pays ? " " + esc(paysLabel(profile.pays)) : "") + "</div>" +
+            (statutOf(profile.badge_affiche) ? '<div class="level-pill">' + statutOf(profile.badge_affiche).emoji + " " + esc(statutOf(profile.badge_affiche).label) + "</div>" : "") +
             (SHOW_LEVELS ? '<div class="level-pill">' + tr("level_label") + " " + lvl.level + " — " + esc(lvl.title) + "</div>" : "") +
           "</div>" +
           (isOwner ? '<button class="btn-ghost btn-sm" data-nav="#/mon-profil/modifier" style="margin-left:auto;">' + tr("btn_modify") + "</button>" : "") +
@@ -1768,6 +1782,7 @@
   // ("USA", "Etats-Unis", "United States"…), puis on affiche son drapeau et son nom dans la
   // langue choisie sur le site. Un pays inconnu garde le texte saisi et le drapeau 🌐.
   var _countryIndex = null;
+  var LEGACY_REGIONS = ["AN", "BU", "CS", "DD", "DY", "FX", "HV", "NH", "NQ", "RH", "SU", "TP", "UK", "VD", "YD", "YU", "ZR", "QO", "ZZ", "XA", "XB", "EZ", "UN", "AC", "CP", "DG", "EA", "IC", "TA"];
   function normCountry(x) {
     return stripAccents(String(x || "")).toLowerCase().replace(/[-'’.]/g, " ").replace(/\s+/g, " ").trim();
   }
@@ -1779,12 +1794,13 @@
       var A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       for (var i = 0; i < 26; i++) for (var j = 0; j < 26; j++) {
         var code = A[i] + A[j];
+        if (LEGACY_REGIONS.indexOf(code) !== -1) continue; // anciens codes (UK, FX, DD…) qui feraient doublon
         var fr = dnFr.of(code), en = dnEn.of(code);
         if (fr && fr !== code && en && en !== code) { idx[normCountry(fr)] = code; idx[normCountry(en)] = code; }
       }
     } catch (e) {}
-    var extra = { "usa": "US", "etats unis": "US", "etats unis d amerique": "US", "united states of america": "US", "us": "US", "uk": "GB",
-      "royaume uni": "GB", "angleterre": "GB", "england": "GB", "ecosse": "GB", "scotland": "GB", "pays de galles": "GB", "wales": "GB",
+    var extra = { "france": "FR", "royaume uni": "GB", "united kingdom": "GB", "usa": "US", "etats unis": "US", "etats unis d amerique": "US", "united states of america": "US", "us": "US", "uk": "GB",
+      "angleterre": "GB", "england": "GB", "ecosse": "GB", "scotland": "GB", "pays de galles": "GB", "wales": "GB",
       "grande bretagne": "GB", "great britain": "GB", "quebec": "CA", "holland": "NL", "hollande": "NL", "pays bas": "NL", "suisse": "CH",
       "republique tcheque": "CZ", "tchequie": "CZ", "czech republic": "CZ", "coree du sud": "KR", "south korea": "KR", "russie": "RU",
       "la reunion": "RE", "reunion": "RE", "martinique": "MQ", "guadeloupe": "GP", "nouvelle caledonie": "NC", "polynesie francaise": "PF",
@@ -2438,37 +2454,24 @@
       return { value: person.nom_complet || person.pseudo, label: (person.nom_complet || person.pseudo) + " (@" + person.pseudo + ")" };
     });
 
-    var badgeSelectHtml = "";
-    if (!isNew) {
-      var tmB = await fetchTroupesDuProfil(p.id);
-      var stB = await fetchRelated("tournois", "profile", p.id);
-      var eqB = await fetchRelated("equipes_rencontrees", "profile", p.id);
-      var rcB = await fetchRencontresConfirmees(p.id);
-      var shB = await fetchShowsPlayed(tmB);
-      var paysB = uniqueList(stB.map(function (t) { return t.pays; }).filter(Boolean).concat(p.pays ? [p.pays] : []));
-      var statsB = { stagesCount: stB.length, paysCount: paysB.length, equipesCount: eqB.length, troupesCount: tmB.length, rencontresCount: rcB.length };
-      var earnedB = computeBadges(Object.assign({}, p, { nb_spectacles: shB.length }), statsB);
-      if (earnedB.length) {
-        badgeSelectHtml = (
-          '<label>Statut affiché dans l’annuaire<span class="field-hint">Un seul statut s’affiche sous ton nom dans la liste des improvisateurs — choisis-le parmi tes hauts faits</span></label>' +
-          '<select name="badge_affiche" style="max-width:340px;"><option value="">Automatique</option>' +
-          earnedB.map(function (b) { return '<option value="' + esc(b.key) + '"' + (p.badge_affiche === b.key ? " selected" : "") + ">" + esc(tr("badge_" + b.key)) + "</option>"; }).join("") +
-          "</select>"
-        );
-      }
-    }
+    var badgeSelectHtml = (
+      '<label>Statut affiché dans l’annuaire<span class="field-hint">Un seul statut s’affiche sous ton nom dans la liste des improvisateurs. « Aucun » = rien n’est affiché.</span></label>' +
+      '<select name="badge_affiche" style="max-width:360px;"><option value="">Aucun</option>' +
+      STATUTS.map(function (x) { return '<option value="' + esc(x.key) + '"' + (p.badge_affiche === x.key ? " selected" : "") + ">" + x.emoji + " " + esc(x.label) + "</option>"; }).join("") +
+      "</select>"
+    );
 
     var basicForm = (
       '<div class="card sect sect-0">' +
         "<h2>" + (isNew ? "Créer mon passeport" : "Mon passeport") + "</h2>" +
         (isNew ? '<p class="hint">Choisis un pseudo unique — c’est ce qui formera le lien de ta fiche.</p>' : "") +
         '<form id="profile-form" autocomplete="off">' +
-          (p.banner_url ? '<img src="' + esc(p.banner_url) + '" class="profile-banner-img" alt="" style="margin-bottom:14px;">' : "") +
+          (p.banner_url ? '<img src="' + esc(p.banner_url) + '" class="banner-preview" alt="">' : "") +
           '<label style="margin-top:0;">Bannière (une photo de toi en train d’improviser, affichée en haut de ta fiche)<span class="field-hint">Format image, 2 Mo maximum</span></label>' +
           '<input type="file" id="banner-input" accept="image/*">' +
           '<input type="url" id="banner-url-input" placeholder="Ou un lien direct vers une image (https://…)" autocomplete="off" style="margin-top:6px;">' +
-          '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:16px 0 6px;">' +
-            avatarHtml(p.avatar_url, p.pseudo, "avatar-md") +
+          '<div style="display:flex;flex-direction:column;align-items:flex-start;gap:14px;margin:18px 0 6px;">' +
+            avatarHtml(p.avatar_url, p.pseudo, "avatar-edit") +
             '<label style="margin:0;flex:1 1 200px;"><span style="display:block;color:var(--gold);font-weight:600;font-size:0.82rem;margin-bottom:5px;">Photo de profil<span class="field-hint" style="display:inline;color:var(--text-dim);font-weight:400;">— 2 Mo maximum</span></span><input type="file" id="avatar-input" accept="image/*"><input type="url" id="avatar-url-input" placeholder="Ou un lien direct (https://…)" autocomplete="off" style="margin-top:6px;width:100%;"></label>' +
           "</div>" +
           '<div class="form-grid">' +
@@ -2629,7 +2632,13 @@
       "</div>"
     );
 
-    return basicForm + extraSections;
+    var footer = (
+      '<div class="card sect sect-0" style="text-align:center;">' +
+        '<button type="submit" form="profile-form" class="btn btn-save" style="font-size:1.05rem;padding:13px 34px;">✓ Enregistrer</button>' +
+        '<p id="profile-form-error-2" class="error-msg"></p>' +
+      "</div>"
+    );
+    return basicForm + extraSections + footer;
   }
   /* ================= Lightbox ================= */
   function showLightbox(url) {
@@ -3090,7 +3099,8 @@
     if (e.target.id === "profile-form") {
       e.preventDefault();
       var f = e.target;
-      var errEl2 = $("profile-form-error");
+      var _pe1 = $("profile-form-error"), _pe2 = $("profile-form-error-2");
+      var errEl2 = { set textContent(v) { _pe1.textContent = v; if (_pe2) { _pe2.textContent = v; if (v) _pe2.scrollIntoView({ block: "center" }); } } };
       errEl2.textContent = "";
       var fields = {
         pseudo: f.pseudo.value.trim().toLowerCase(),
